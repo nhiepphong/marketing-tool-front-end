@@ -9,10 +9,8 @@ export interface GLOBALDIALOG {
   } | null;
 }
 const DataContext = createContext<{
-  statusGame: string;
-  setStatusGame: React.Dispatch<React.SetStateAction<string>>;
-  isVisited: boolean;
-  setIsVisited: React.Dispatch<React.SetStateAction<boolean>>;
+  isNeedGetNewToken: boolean;
+  setIsNeedGetNewToken: React.Dispatch<React.SetStateAction<boolean>>;
 } | null>(null);
 
 export default DataContext;

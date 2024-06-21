@@ -16,14 +16,20 @@ export const loginUser = createAsyncThunk(
         password,
       };
       const response = await loginUserByAPI(props);
-      //console.log("loginUser", response);
-      if (response.status) {
-        showToast({ message: response.message, type: "success" });
+      console.log("loginUser", response);
+      const message = response.data.message || response.message;
+
+      if (response.status == 200) {
+        showToast({ message: message, type: "success" });
         //console.log("fulfillWithValue", response);
-        return fulfillWithValue(response.data);
+        return fulfillWithValue(response.data.data);
       } else {
-        showToast({ type: "error", message: response.message });
-        throw rejectWithValue(response.message);
+        console.log("message", message);
+        showToast({
+          type: "error",
+          message: message,
+        });
+        throw rejectWithValue(message);
       }
     } catch (error) {
       throw rejectWithValue(

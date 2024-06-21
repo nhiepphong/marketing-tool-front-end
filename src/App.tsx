@@ -14,6 +14,12 @@ import Logout from "./pages/logout";
 import QuenMatKhau from "./pages/quen-mat-khau";
 import ProtectedLogin from "./components/auth/ProtectedLogin";
 import ProtectedRouter from "./components/auth/ProtectedRouter";
+import { ToastContainer } from "react-toastify";
+import { getNewTokenByAPI } from "./api/user";
+import { useDispatch, useSelector } from "react-redux";
+import { getUserData, updateData } from "./redux/slices/userSlices";
+import Profile from "./pages/profile";
+import PackagesPage from "./pages/packages";
 
 const router = createBrowserRouter([
   {
@@ -47,8 +53,12 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "logout",
-        element: <Logout />,
+        path: "account",
+        element: <Profile />,
+      },
+      {
+        path: "subscription",
+        element: <PackagesPage />,
       },
       {
         path: "*",
@@ -61,8 +71,8 @@ const router = createBrowserRouter([
     element: <LayoutClient />,
     children: [
       {
-        path: "*",
-        element: <Home />,
+        path: "logout",
+        element: <Logout />,
       },
     ],
   },
@@ -73,20 +83,62 @@ if (process.env.NODE_ENV === "production") {
 }
 
 function App() {
-  const [statusGame, setStatusGame] = useState("");
-  const [isVisited, setIsVisited] = useState(false);
+  const dataUser = useSelector(getUserData);
+  const [isNeedGetNewToken, setIsNeedGetNewToken] = useState(false);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    if (isNeedGetNewToken && dataUser) {
+      getNewToken();
+    }
+  }, [isNeedGetNewToken]);
+
+  useEffect(() => {
+    if (dataUser) {
+      getNewToken();
+    }
+  }, []);
+
+  const getNewToken = async () => {
+    setIsNeedGetNewToken(false);
+    const result = await getNewTokenByAPI(
+      { refreshToken: dataUser.token.refreshToken },
+      dataUser.token.accessToken
+    );
+
+    if (result?.status === 200) {
+      dispatch(
+        updateData({
+          token: {
+            refreshToken: dataUser.token.refreshToken,
+            accessToken: result.data.accessToken,
+          },
+          user: dataUser.user,
+        } as any)
+      );
+    }
+  };
 
   return (
-    <div className="flex flex-col min-h-screen safe-top safe-bottom">
+    <div className="flex flex-col min-h-screen">
       <DataContext.Provider
         value={{
-          statusGame,
-          setStatusGame,
-          isVisited,
-          setIsVisited,
+          isNeedGetNewToken,
+          setIsNeedGetNewToken,
         }}
       >
         <RouterProvider router={router} />
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </DataContext.Provider>
     </div>
   );

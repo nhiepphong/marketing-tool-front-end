@@ -6,6 +6,6 @@ export const loginUserByAPI = async (props: ValuePropsGetUser) => {
   const reqUrl = URL_API.LOGIN;
 
   const res = await Api.post(reqUrl, props);
-  //console.log("res", res.data);
-  return res.data;
+  //console.log("res", res);
+  return res;
 };

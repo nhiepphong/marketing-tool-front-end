@@ -17,13 +17,10 @@ export default function Logout() {
 
   useEffect(() => {
     dispatch(logout());
-    navigate("/page/8s66WjsLb75XnPEW");
+    navigate("/login");
   }, []);
 
   return (
-    <div
-      className="w-full h-full bg-cover bg-no-repeat relative overflow-hidden min-h-[727px]"
-      style={{ backgroundImage: "url(/assets/images/home/home-bg.png)" }}
-    ></div>
+    <div className="w-full h-full bg-cover bg-no-repeat relative overflow-hidden min-h-[727px]"></div>
   );
 }

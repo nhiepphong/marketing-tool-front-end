@@ -15,29 +15,23 @@ export const LayoutClient = () => {
   }, [location]);
 
   return (
-    <div className="w-full h-full flex justify-center items-center">
-      <div
-        ref={rootRef}
-        className="bg-white shadow rounded max-w-full overflow-auto relative"
-      >
-        <PopUp />
-        <div className="w-full h-full relative">
+    <div className="flex flex-col min-h-screen">
+      <Header />
+
+      <main className="flex-grow bg-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Outlet />
-          <Header />
         </div>
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
-      </div>
+      </main>
+
+      <footer className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-sm text-gray-500">
+            Bản quyền thuộc về CoDev.vn
+          </p>
+        </div>
+      </footer>
+      <PopUp />
     </div>
   );
 };

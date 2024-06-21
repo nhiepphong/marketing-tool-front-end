@@ -3,6 +3,7 @@ export enum URL_API {
   GET_USERINFO = "http://localhost:8000/users/profile",
   REGISTER = "http://localhost:8000/auth/register",
   FORGOT_PASSWORD = "http://localhost:8000/auth/forgot-pass",
+  REFRESH_TOKEN = "http://localhost:8000/auth/refresh-token",
 
   RESEND_OTP = "https://api.aeonvietnamdontrieumember.com/api/resend-otp",
   CHANGE_PASSWORD = "https://api.aeonvietnamdontrieumember.com/api/change-pass",

@@ -15,12 +15,9 @@ export type defaultValue = {
 };
 
 export type DataUser = {
-  id: number;
-  fullname: string;
-  phone: string;
-  token: string;
-  dataUser: number;
-  total_play: number;
-  count_play: number;
-  time_win: number;
+  user: any;
+  token: {
+    accessToken: string;
+    refreshToken: string;
+  };
 };
