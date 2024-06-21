@@ -1,10 +1,8 @@
 export enum URL_API {
-  LOGIN = "https://api.aeonvietnamdontrieumember.com/api/login",
-  GET_USERINFO = "https://api.aeonvietnamdontrieumember.com/api/get-user-info",
-  REGISTER = "https://api.aeonvietnamdontrieumember.com/api/register",
-  XEM_THEM = "https://api.aeonvietnamdontrieumember.com/link-xem-them",
-  GET_LIST_WINNER = "https://api.aeonvietnamdontrieumember.com/api/get-list-winner",
-  FORGOT_PASSWORD = "https://api.aeonvietnamdontrieumember.com/api/forgot-pass",
+  LOGIN = "http://localhost:8000/auth/login",
+  GET_USERINFO = "http://localhost:8000/users/profile",
+  REGISTER = "http://localhost:8000/auth/register",
+  FORGOT_PASSWORD = "http://localhost:8000/auth/forgot-pass",
 
   RESEND_OTP = "https://api.aeonvietnamdontrieumember.com/api/resend-otp",
   CHANGE_PASSWORD = "https://api.aeonvietnamdontrieumember.com/api/change-pass",

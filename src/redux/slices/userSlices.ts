@@ -7,12 +7,12 @@ import { showToast } from "../../utils/showToast";
 export const loginUser = createAsyncThunk(
   "user/login",
   async (
-    { phone, password }: ValuePropsGetUser,
+    { email, password }: ValuePropsGetUser,
     { rejectWithValue, fulfillWithValue }
   ) => {
     try {
       const props = {
-        phone,
+        email,
         password,
       };
       const response = await loginUserByAPI(props);

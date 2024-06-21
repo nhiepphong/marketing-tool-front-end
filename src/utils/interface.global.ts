@@ -1,5 +1,5 @@
 export type ValuePropsGetUser = {
-  phone: string;
+  email: string;
   password: string;
 };
 

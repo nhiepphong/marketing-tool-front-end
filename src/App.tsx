@@ -24,6 +24,14 @@ const router = createBrowserRouter([
         path: "/login",
         element: <ProtectedLogin props={<Login />} type={""} key={""} />,
       },
+      {
+        path: "/register",
+        element: <ProtectedLogin props={<Register />} type={""} key={""} />,
+      },
+      {
+        path: "/quen-mat-khau",
+        element: <ProtectedLogin props={<QuenMatKhau />} type={""} key={""} />,
+      },
     ],
   },
   {
@@ -53,14 +61,6 @@ const router = createBrowserRouter([
     element: <LayoutClient />,
     children: [
       {
-        path: "/quen-mat-khau",
-        element: <QuenMatKhau />,
-      },
-      {
-        path: "/register",
-        element: <Register />,
-      },
-      {
         path: "*",
         element: <Home />,
       },
@@ -77,7 +77,7 @@ function App() {
   const [isVisited, setIsVisited] = useState(false);
 
   return (
-    <div className="bg-[#000000] flex flex-col min-h-screen safe-top safe-bottom">
+    <div className="flex flex-col min-h-screen safe-top safe-bottom">
       <DataContext.Provider
         value={{
           statusGame,

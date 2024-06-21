@@ -13,137 +13,164 @@ import { showToast } from "../utils/showToast";
 import { postforgotPassword } from "../api/user";
 
 export default function QuenMatKhau() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const dataUser = useSelector(getUserData);
-  const [formData, setFormData] = useState({
-    phone: "",
-    email: "",
-  });
-  const loginError = useSelector(getUsertErr);
-  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [step, setStep] = useState(1);
 
-  useEffect(() => {
-    if (dataUser) {
-      navigate("/");
-    }
-  }, [dataUser]);
-
-  const onLogin = () => {
-    navigate("/login");
+  const handleSubmitEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Sending reset code to:", email);
+    setStep(2);
   };
 
-  useEffect(() => {
-    if (isLoading) {
-      setIsLoading(false);
-    }
-  }, [loginError]);
+  const handleSubmitCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Verifying code:", code);
+    setStep(3);
+  };
 
-  const handleConfirm = async () => {
-    if (formData.email != "" && formData.phone != "") {
-      setIsLoading(true);
+  const handleResetPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Resetting password:", newPassword);
+    // Xử lý đặt lại mật khẩu và chuyển hướng
+  };
 
-      const result: any = await postforgotPassword(formData);
-
-      if (result.status == 200) {
-        if (result.data.status) {
-          showToast({ type: "success", message: result.data.message });
-          navigate("/page/8s66WjsLb75XnPEW");
-        } else {
-          setIsLoading(false);
-          showToast({ type: "error", message: result.data.message });
-        }
-      } else {
-        setIsLoading(false);
-        showToast({ type: "error", message: result.data.message });
-      }
-    } else {
-      setIsLoading(false);
-      showToast({
-        type: "error",
-        message: "vui lòng nhập email và số điện thoại",
-      });
-    }
+  const handleBack = () => {
+    setStep(step - 1);
   };
 
   return (
-    <div
-      className="w-full h-full bg-cover bg-no-repeat relative overflow-hidden min-h-[727px]"
-      style={{ backgroundImage: "url(/assets/images/home/home-bg.png)" }}
-    >
-      <div className="absolute -bottom-3 right-0 left-0 pointer-events-none">
-        <img
-          src="/assets/images/common/main-item.svg"
-          alt="Home"
-          className="w-[200%] ml-[-58%] max-w-[200%] mx-auto relative z-20"
-        />
-      </div>
-      <div className="absolute top-[110px] left-5 right-5 h-[360px] bg-no-repeat p-5">
-        <img
-          src="/assets/images/common/big-frame.png"
-          alt="Home"
-          className="w-full h-full absolute top-0 left-0 right-0 bottom-0"
-        />
-        <div className="w-full h-full no-scrollbar flex items-start max-h-[360px]">
-          <div className="h-[400px] mx-auto  no-scrollbar">
-            <h2 className="text-center uppercase text-white font-bold text-[24px] leading-[28px] relative mt-2">
-              gửi yêu cầu
-              <br />
-              lấy lại mật khẩu
-            </h2>
-            <div className="flex flex-col gap-4 mt-5">
-              <TextInput
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e })}
-                placeholder="Số điện thoại"
-              />
-              <TextInput
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e })}
-                placeholder="Email"
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg">
+        <h3 className="text-2xl font-bold text-center text-gray-800">
+          Quên mật khẩu
+        </h3>
+        {step === 1 && (
+          <form onSubmit={handleSubmitEmail}>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="email"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="Nhập email của bạn"
+                id="email"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
-            <div className="flex justify-center mt-5 relative z-30">
-              {isLoading ? (
-                <p className="text-white self-center mt-4 font-semibold text-center underline whitespace-nowrap">
-                  Đang xử lý
-                </p>
-              ) : (
-                <ImageButton
-                  text="Gửi yêu cầu"
-                  textClassName="text-white font-bold uppercase text-[14px]"
-                  onClick={handleConfirm}
-                  altText="Gửi yêu cầu"
-                  imageSrc="/assets/images/common/gradient-btn-frame.svg"
-                  className="w-[150px] mx-auto"
-                />
-              )}
+            <div className="flex items-center justify-between mt-4">
+              <button
+                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                type="submit"
+              >
+                Gửi mã xác nhận
+              </button>
+              <Link
+                to="/login"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Đăng nhập
+              </Link>
             </div>
-            <div className="flex justify-center mt-2 z-30 relative">
-              <ImageButton
-                text="Đăng nhập"
-                textClassName="text-white font-bold uppercase text-[14px]"
-                onClick={onLogin}
-                altText="Đăng nhập"
-                imageSrc="/assets/images/common/gradient-btn-frame.svg"
-                className="w-[150px] mx-auto"
+          </form>
+        )}
+        {step === 2 && (
+          <form onSubmit={handleSubmitCode}>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="code"
+              >
+                Mã xác nhận
+              </label>
+              <input
+                type="text"
+                placeholder="Nhập mã xác nhận"
+                id="code"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
               />
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-1 right-0 left-0 flex justify-center items-center">
-        <ImageButton
-          text="Xem thêm ưu đãi khác"
-          textClassName="text-[11px] text-white uppercase font-bold"
-          imageSrc="/assets/images/common/uu-dai-btn.svg"
-          className="mx-auto w-44 z-40"
-          altText="Play"
-          onClick={() => {
-            window.open(URL_API.XEM_THEM, "_blank");
-          }}
-        />
+            <div className="flex items-center justify-between mt-4">
+              <button
+                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                type="submit"
+              >
+                Xác nhận
+              </button>
+              <button
+                className="px-4 py-2 text-blue-600 bg-transparent border border-blue-600 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                type="button"
+                onClick={handleBack}
+              >
+                Quay lại
+              </button>
+            </div>
+          </form>
+        )}
+        {step === 3 && (
+          <form onSubmit={handleResetPassword}>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="newPassword"
+              >
+                Mật khẩu mới
+              </label>
+              <input
+                type="password"
+                placeholder="Nhập mật khẩu mới"
+                id="newPassword"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="confirmPassword"
+              >
+                Xác nhận mật khẩu mới
+              </label>
+              <input
+                type="password"
+                placeholder="Nhập lại mật khẩu mới"
+                id="confirmPassword"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex items-center justify-between mt-4">
+              <button
+                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                type="submit"
+              >
+                Đặt lại mật khẩu
+              </button>
+              <button
+                className="px-4 py-2 text-blue-600 bg-transparent border border-blue-600 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                type="button"
+                onClick={handleBack}
+              >
+                Quay lại
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

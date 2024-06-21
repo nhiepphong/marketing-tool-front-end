@@ -15,11 +15,10 @@ export const LayoutClient = () => {
   }, [location]);
 
   return (
-    <div className="min-h-screen flex justify-center items-center">
+    <div className="w-full h-full flex justify-center items-center">
       <div
         ref={rootRef}
-        className="bg-white shadow rounded max-w-full min-[450px]:max-w-xs  w-full h-screen min-[450px]:h-[702px] max-h-screen overflow-auto relative"
-        // className="bg-white shadow rounded max-w-full min-[450px]:max-w-xs  w-full h-screen max-h-screen overflow-auto relative"
+        className="bg-white shadow rounded max-w-full overflow-auto relative"
       >
         <PopUp />
         <div className="w-full h-full relative">

@@ -57,96 +57,124 @@ export default function Register() {
   };
 
   return (
-    <div
-      className="w-full h-full bg-cover bg-no-repeat relative overflow-hidden"
-      style={{ backgroundImage: "url(/assets/images/home/home-bg.png)" }}
-    >
-      <div className="absolute top-[100px] left-5 right-5 bottom-0 p-5 h-[63%]">
-        <img
-          src="/assets/images/common/big-frame.png"
-          alt="Home"
-          className="w-full h-full absolute top-0 left-0 right-0 bottom-0"
-        />
-        <div className="w-full h-full overflow-x-hidden overflow-y-scroll no-scrollbar">
-          <h2 className="text-center uppercase text-white font-medium relative text-[22px]">
-            Hãy tạo thông tin
-            <br />
-            <strong> Thợ săn </strong>
-            <br />
-            Để bắt đầu chơi nào
-          </h2>
-          <div className="flex flex-col gap-4 mt-5">
-            <TextInput
-              value={formData.fullname}
-              onChange={(e) => setFormData({ ...formData, fullname: e })}
-              placeholder="Tên"
-            />
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md px-8 py-6 mt-4 text-left bg-white shadow-lg rounded-lg">
+        <h3 className="text-2xl font-bold text-center text-gray-800">
+          Đăng ký tài khoản
+        </h3>
+        <form onSubmit={createAccount}>
+          <div className="mt-4">
             <div>
-              <TextInput
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e })}
-                placeholder="SĐT (*)"
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="name"
+              >
+                Họ và tên
+              </label>
+              <input
+                type="text"
+                placeholder="Nhập họ và tên"
+                id="name"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={formData.fullname}
+                onChange={(e) =>
+                  setFormData({ ...formData, fullname: e.target.value })
+                }
+                required
               />
-              <p className="text-[9px] text-white relative mt-3 font-bold">
-                [*] Lưu ý, cần nhập đúng sđt đã đăng ký thành viên AEON để hệ
-                thống trả thưởng khi bạn hoàn thành thử thách.
-              </p>
             </div>
-            <TextInput
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e })}
-              placeholder="Email"
-            />
-            <PasswordInput
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e })}
-              placeholder="Mật khẩu"
-            />
-            <PasswordInput
-              value={formData.rePassword}
-              onChange={(e) => setFormData({ ...formData, rePassword: e })}
-              placeholder="Nhập lại mật khẩu"
-            />
-            <div className="flex text-[12px] items-center text-white relative">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="w-5 h-5"
-                  onChange={() => console.log}
-                />
-                <span className=" ml-2"> Ghi nhớ mật khẩu</span>
-              </div>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="phone"
+              >
+                Số điện thoại
+              </label>
+              <input
+                type="tel"
+                placeholder="Nhập số điện thoại"
+                id="phone"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="email"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="Nhập email"
+                id="email"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="password"
+              >
+                Mật khẩu
+              </label>
+              <input
+                type="password"
+                placeholder="Nhập mật khẩu"
+                id="password"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="mt-4">
+              <label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="confirmPassword"
+              >
+                Nhập lại mật khẩu
+              </label>
+              <input
+                type="password"
+                placeholder="Nhập lại mật khẩu"
+                id="confirmPassword"
+                className="w-full px-3 py-2 mt-1 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                value={formData.rePassword}
+                onChange={(e) =>
+                  setFormData({ ...formData, rePassword: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="flex items-center justify-between mt-6">
+              <button
+                className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                type="submit"
+              >
+                Đăng ký
+              </button>
+              <a
+                href="/login"
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Đăng nhập
+              </a>
             </div>
           </div>
-        </div>
-      </div>
-      <div className="absolute bottom-20 right-0 left-0 flex justify-center items-center">
-        {isLoading ? (
-          <p className="text-white self-center mt-4 font-semibold text-center underline whitespace-nowrap">
-            Đang xử lý
-          </p>
-        ) : (
-          <ImageButton
-            text="Tạo thông tin"
-            textClassName="text-white font-bold uppercase text-[18px] mt-1"
-            onClick={createAccount}
-            altText="Login"
-            imageSrc="/assets/images/common/gradient-btn-frame.svg"
-            className="w-[180px] mx-auto"
-          />
-        )}
-      </div>
-      <div className="absolute bottom-1 right-0 left-0 flex justify-center items-center">
-        <ImageButton
-          text="Xem thêm ưu đãi khác"
-          textClassName="text-[11px] text-white uppercase font-bold"
-          imageSrc="/assets/images/common/uu-dai-btn.svg"
-          className="mx-auto w-44"
-          altText="Play"
-          onClick={() => {
-            window.open(URL_API.XEM_THEM, "_blank");
-          }}
-        />
+        </form>
       </div>
     </div>
   );
