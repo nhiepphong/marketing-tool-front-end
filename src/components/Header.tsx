@@ -136,6 +136,14 @@ export default function Header() {
                       Gói sử dụng
                     </Link>
                     <Link
+                      to="/app/billing-history"
+                      onClick={() => setShowSubmenu(!showSubmenu)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                    >
+                      Lịch sử giao dịch
+                    </Link>
+                    <Link
                       to="/logout"
                       onClick={() => setShowSubmenu(!showSubmenu)}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

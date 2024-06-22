@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getUserData, logout, updateData } from "./redux/slices/userSlices";
 import Profile from "./pages/profile";
 import PackagesPage from "./pages/packages";
+import PurchaseHistoryPage from "./pages/billing-history";
 
 const router = createBrowserRouter([
   {
@@ -59,6 +60,10 @@ const router = createBrowserRouter([
       {
         path: "subscription",
         element: <PackagesPage />,
+      },
+      {
+        path: "billing-history",
+        element: <PurchaseHistoryPage />,
       },
       {
         path: "*",

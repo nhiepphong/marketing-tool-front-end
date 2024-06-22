@@ -7,7 +7,10 @@ export enum URL_API {
   FORGOT_PASSWORD = "http://localhost:8000/auth/forgot-pass",
   REFRESH_TOKEN = "http://localhost:8000/auth/refresh-token",
 
-  RESEND_OTP = "https://api.aeonvietnamdontrieumember.com/api/resend-otp",
+  GET_PACKAGES = "http://localhost:8000/store/get-packages",
+  BUY_PACKAGE = "http://localhost:8000/store/buy-packages",
+  GET_HISTORY_PAYMENT = "http://localhost:8000/store/get-list-bill-payment-package",
+
   CHANGE_PASSWORD = "https://api.aeonvietnamdontrieumember.com/api/change-pass",
   FORGOT_PASSWORD_STEP1 = "https://api.aeonvietnamdontrieumember.com/api/forgot-pass",
   FORGOT_PASSWORD_STEP2 = "https://api.aeonvietnamdontrieumember.com/api/forgot-pass-verify-otp",
