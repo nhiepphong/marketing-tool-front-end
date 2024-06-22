@@ -25,6 +25,30 @@ export const getUserInfoByAPI = async (params: any, jwt: string) => {
   }
 };
 
+export const updateProfileByAPI = async (params: any, jwt: string) => {
+  try {
+    const reqUrl = URL_API.UPDATE_PROFILE;
+    const res = await Api.post(reqUrl, params, jwt);
+    //console.log("getUserInfoByAPI", res);
+    return res;
+  } catch (error) {
+    //console.log("getUserInfoByAPI error", error);
+    return null;
+  }
+};
+
+export const updatePasswordByAPI = async (params: any, jwt: string) => {
+  try {
+    const reqUrl = URL_API.UPDATE_PASSWORD;
+    const res = await Api.post(reqUrl, params, jwt);
+    //console.log("getUserInfoByAPI", res);
+    return res;
+  } catch (error) {
+    //console.log("getUserInfoByAPI error", error);
+    return null;
+  }
+};
+
 export const getNewTokenByAPI = async (params: any, jwt: string) => {
   try {
     const reqUrl = URL_API.REFRESH_TOKEN;

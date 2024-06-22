@@ -17,7 +17,7 @@ import ProtectedRouter from "./components/auth/ProtectedRouter";
 import { ToastContainer } from "react-toastify";
 import { getNewTokenByAPI } from "./api/user";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserData, updateData } from "./redux/slices/userSlices";
+import { getUserData, logout, updateData } from "./redux/slices/userSlices";
 import Profile from "./pages/profile";
 import PackagesPage from "./pages/packages";
 
@@ -115,6 +115,8 @@ function App() {
           user: dataUser.user,
         } as any)
       );
+    } else if (result?.status === 403) {
+      dispatch(logout());
     }
   };
 

@@ -1,6 +1,8 @@
 export enum URL_API {
   LOGIN = "http://localhost:8000/auth/login",
   GET_USERINFO = "http://localhost:8000/users/profile",
+  UPDATE_PROFILE = "http://localhost:8000/users/update-profile",
+  UPDATE_PASSWORD = "http://localhost:8000/users/update-password",
   REGISTER = "http://localhost:8000/auth/register",
   FORGOT_PASSWORD = "http://localhost:8000/auth/forgot-pass",
   REFRESH_TOKEN = "http://localhost:8000/auth/refresh-token",

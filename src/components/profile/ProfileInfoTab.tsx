@@ -1,13 +1,73 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { getUserData, updateData } from "../../redux/slices/userSlices";
+import { useDispatch, useSelector } from "react-redux";
+import { getUserInfoByAPI, updateProfileByAPI } from "../../api/user";
+import DataContext from "../../context/DataContext";
+import { useNavigate } from "react-router-dom";
+import { showToast } from "../../utils/showToast";
 
 const ProfileInfoTab: React.FC = () => {
-  const [name, setName] = useState("Nguyễn Văn A");
-  const [phone, setPhone] = useState("0123456789");
-  const [email, setEmail] = useState("nguyenvana@example.com");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { isNeedGetNewToken, setIsNeedGetNewToken } = useContext(DataContext)!;
+  const dataUser = useSelector(getUserData);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  });
+
+  useEffect(() => {
+    getProfile();
+  }, []);
+
+  useEffect(() => {
+    if (dataUser) {
+      setFormData({
+        name: dataUser.user?.name || "",
+        phone: dataUser.user?.phone || "",
+        email: dataUser.user?.email || "",
+      });
+    }
+  }, [dataUser]);
+
+  const getProfile = async () => {
+    const result: any = await getUserInfoByAPI({}, dataUser.token.accessToken);
+    //console.log("getProfile", result);
+    if (result.status === 200) {
+      dispatch(
+        updateData({
+          token: dataUser.token,
+          user: result.data.data.user,
+        } as any)
+      );
+    } else if (result.status === 403) {
+      setIsNeedGetNewToken(true);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Update profile:", { name, phone, email });
+    setIsLoading(true);
+    const result: any = await updateProfileByAPI(
+      formData,
+      dataUser.token.accessToken
+    );
+    setIsLoading(false);
+    console.log("updateProfile", result);
+    if (result.status === 200) {
+      dispatch(
+        updateData({
+          token: dataUser.token,
+          user: result.data.data.user,
+        } as any)
+      );
+      showToast({ type: "success", message: result.data.message });
+    } else {
+      showToast({ type: "error", message: result.data.message });
+    }
   };
 
   return (
@@ -26,8 +86,10 @@ const ProfileInfoTab: React.FC = () => {
                 <input
                   type="text"
                   className="w-full px-3 py-2 border rounded-md"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                 />
               </dd>
             </div>
@@ -39,8 +101,10 @@ const ProfileInfoTab: React.FC = () => {
                 <input
                   type="tel"
                   className="w-full px-3 py-2 border rounded-md"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                 />
               </dd>
             </div>
@@ -50,19 +114,27 @@ const ProfileInfoTab: React.FC = () => {
                 <input
                   type="email"
                   className="w-full px-3 py-2 border rounded-md"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                 />
               </dd>
             </div>
           </dl>
           <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-            <button
-              type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Cập nhật thông tin
-            </button>
+            {isLoading ? (
+              <div className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-indigo focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Đăng cập nhật thông tin
+              </div>
+            ) : (
+              <button
+                type="submit"
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Cập nhật thông tin
+              </button>
+            )}
           </div>
         </form>
       </div>

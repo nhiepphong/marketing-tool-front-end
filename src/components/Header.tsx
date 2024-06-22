@@ -68,12 +68,16 @@ export default function Header() {
     }
   };
 
+  const goHome = () => {
+    navigate("/app");
+  };
+
   return (
     <nav className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
+          <div onClick={goHome} className="flex-shrink-0 flex items-center">
             <img className="h-8 w-auto" src={logo} alt="Logo" />
           </div>
 
@@ -117,6 +121,7 @@ export default function Header() {
                   >
                     <Link
                       to="/app/account"
+                      onClick={() => setShowSubmenu(!showSubmenu)}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       role="menuitem"
                     >
@@ -124,6 +129,7 @@ export default function Header() {
                     </Link>
                     <Link
                       to="/app/subscription"
+                      onClick={() => setShowSubmenu(!showSubmenu)}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       role="menuitem"
                     >
@@ -131,6 +137,7 @@ export default function Header() {
                     </Link>
                     <Link
                       to="/logout"
+                      onClick={() => setShowSubmenu(!showSubmenu)}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       role="menuitem"
                     >
