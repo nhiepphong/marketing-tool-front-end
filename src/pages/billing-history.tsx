@@ -2,7 +2,10 @@ import React, { useEffect, useState } from "react";
 import PaymentPopup from "../components/package/payment-popup";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserData } from "../redux/slices/userSlices";
-import { getHistoryPaymentPackageByAPI } from "../api/store";
+import {
+  cancelPackageByAPI,
+  getHistoryPaymentPackageByAPI,
+} from "../api/store";
 import { showToast } from "../utils/showToast";
 import { set } from "animejs";
 import { formatDateTime } from "../utils/utils";
@@ -61,9 +64,23 @@ const PurchaseHistoryPage: React.FC = () => {
     setCurrentPage(page);
   };
 
-  const handleCancel = (item: PurchaseHistoryItem) => {
-    // Xử lý logic hủy đơn hàng ở đây
-    console.log("Hủy đơn hàng:", item);
+  const handleCancel = async (item: PurchaseHistoryItem) => {
+    setIsLoading(true);
+    const result: any = await cancelPackageByAPI(
+      { id: item.id },
+      dataUser.token.accessToken
+    );
+    setIsLoading(false);
+    if (result.status === 200) {
+      if (result.data.status) {
+        getHistoryPaymentPackage();
+        showToast({ type: "success", message: result.data.message });
+      } else {
+        showToast({ type: "error", message: result.data.message });
+      }
+    } else {
+      showToast({ type: "error", message: result.data.message });
+    }
   };
 
   const handleViewDetails = (item: PurchaseHistoryItem) => {

@@ -25,6 +25,18 @@ export const buyPackageByAPI = async (params: any, jwt: string) => {
   }
 };
 
+export const cancelPackageByAPI = async (params: any, jwt: string) => {
+  try {
+    const reqUrl = URL_API.CANCEL_PACKAGE;
+    const res = await Api.post(reqUrl, params, jwt);
+    //console.log("getUserInfoByAPI", res);
+    return res;
+  } catch (error) {
+    //console.log("getUserInfoByAPI error", error);
+    return null;
+  }
+};
+
 export const getHistoryPaymentPackageByAPI = async (
   params: any,
   jwt: string

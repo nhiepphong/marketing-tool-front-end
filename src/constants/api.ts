@@ -8,8 +8,9 @@ export enum URL_API {
   REFRESH_TOKEN = "http://localhost:8000/auth/refresh-token",
 
   GET_PACKAGES = "http://localhost:8000/store/get-packages",
-  BUY_PACKAGE = "http://localhost:8000/store/buy-packages",
+  BUY_PACKAGE = "http://localhost:8000/store/buy-package",
   GET_HISTORY_PAYMENT = "http://localhost:8000/store/get-list-bill-payment-package",
+  CANCEL_PACKAGE = "http://localhost:8000/store/cancel-package",
 
   CHANGE_PASSWORD = "https://api.aeonvietnamdontrieumember.com/api/change-pass",
   FORGOT_PASSWORD_STEP1 = "https://api.aeonvietnamdontrieumember.com/api/forgot-pass",
