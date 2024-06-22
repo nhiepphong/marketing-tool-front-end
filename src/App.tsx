@@ -21,6 +21,7 @@ import { getUserData, logout, updateData } from "./redux/slices/userSlices";
 import Profile from "./pages/profile";
 import PackagesPage from "./pages/packages";
 import PurchaseHistoryPage from "./pages/billing-history";
+import FacebookTab from "./pages/facebook-tab";
 
 const router = createBrowserRouter([
   {
@@ -64,6 +65,10 @@ const router = createBrowserRouter([
       {
         path: "billing-history",
         element: <PurchaseHistoryPage />,
+      },
+      {
+        path: "facebook",
+        element: <FacebookTab />,
       },
       {
         path: "*",
