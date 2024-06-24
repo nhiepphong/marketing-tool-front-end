@@ -35,6 +35,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
         >
           Lịch sử
         </li>
+        <li
+          className={`mb-2 cursor-pointer p-2 rounded text-gray-700 ${
+            activeTab === "settings" ? "bg-gray-200" : "hover:bg-gray-200"
+          }`}
+          onClick={() => onTabChange("settings")}
+        >
+          Settings
+        </li>
       </ul>
     </div>
   );

@@ -11,6 +11,12 @@ const FacebookLayUID: React.FC = () => {
   const [url, setUrl] = useState("");
   const [userData, setUserData] = useState<UserData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchType, setSearchType] = useState("personal");
+  const [interactions, setInteractions] = useState({
+    like: false,
+    comment: false,
+    share: false,
+  });
   const itemsPerPage = 10;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -23,6 +29,8 @@ const FacebookLayUID: React.FC = () => {
       phone: i % 3 === 0 ? null : `0123456${i.toString().padStart(3, "0")}`,
     }));
     setUserData(mockData);
+    console.log("Search Type:", searchType);
+    console.log("Interactions:", interactions);
   };
 
   const handleGetPhone = (uid: string) => {
@@ -31,6 +39,13 @@ const FacebookLayUID: React.FC = () => {
 
   const handleExportExcel = () => {
     console.log("Exporting data to Excel");
+  };
+
+  const handleInteractionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInteractions({
+      ...interactions,
+      [e.target.name]: e.target.checked,
+    });
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -48,20 +63,82 @@ const FacebookLayUID: React.FC = () => {
         Nhập URL Facebook vào ô bên dưới và nhấn Get để lấy UID.
       </p>
 
-      <form onSubmit={handleSubmit} className="mb-8 flex">
-        <input
-          type="text"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Nhập URL Facebook"
-          className="flex-grow p-2 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Get
-        </button>
+      <form onSubmit={handleSubmit} className="mb-8">
+        <div className="flex mb-4">
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Nhập URL Facebook"
+            className="flex-grow p-2 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Get
+          </button>
+        </div>
+
+        <div className="mb-4">
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="radio"
+              className="form-radio"
+              name="searchType"
+              value="personal"
+              checked={searchType === "personal"}
+              onChange={(e) => setSearchType(e.target.value)}
+            />
+            <span className="ml-2">Trang cá nhân</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              className="form-radio"
+              name="searchType"
+              value="post"
+              checked={searchType === "post"}
+              onChange={(e) => setSearchType(e.target.value)}
+            />
+            <span className="ml-2">Trang bài viết</span>
+          </label>
+        </div>
+
+        {searchType === "post" && (
+          <div className="ml-6 mb-4">
+            <label className="inline-flex items-center mr-4">
+              <input
+                type="checkbox"
+                className="form-checkbox"
+                name="like"
+                checked={interactions.like}
+                onChange={handleInteractionChange}
+              />
+              <span className="ml-2">Like</span>
+            </label>
+            <label className="inline-flex items-center mr-4">
+              <input
+                type="checkbox"
+                className="form-checkbox"
+                name="comment"
+                checked={interactions.comment}
+                onChange={handleInteractionChange}
+              />
+              <span className="ml-2">Comment</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                className="form-checkbox"
+                name="share"
+                checked={interactions.share}
+                onChange={handleInteractionChange}
+              />
+              <span className="ml-2">Share</span>
+            </label>
+          </div>
+        )}
       </form>
 
       {userData.length > 0 && (
