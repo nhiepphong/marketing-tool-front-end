@@ -5,6 +5,7 @@ import {
   Navigate,
   RouterProvider,
   createBrowserRouter,
+  createHashRouter,
 } from "react-router-dom";
 import { LayoutClient } from "./layout/Layout";
 import Home from "./pages/home";
@@ -23,7 +24,7 @@ import PackagesPage from "./pages/packages";
 import PurchaseHistoryPage from "./pages/billing-history";
 import FacebookTab from "./pages/facebook-tab";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     children: [

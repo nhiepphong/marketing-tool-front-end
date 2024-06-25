@@ -2,8 +2,9 @@
   "name": "marketing-tool",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
   "main": "./dist/main.js",
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.1",
     "@testing-library/jest-dom": "^5.17.0",
@@ -36,12 +37,11 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron-dev": "concurrently \"BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron-pack": "npm run build && electron-builder build --publish never",
-    "electron-build": "npm run build && electron-builder",
-    "preelectron-pack": "npm run build",
     "build-electron": "tsc -p tsconfig.electron.json",
-    "start-electron": "npm run build-electron && electron ."
+    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development npm run build-electron && electron .\"",
+    "electron:prod": "npm run build && cross-env NODE_ENV=production npm run build-electron && electron .",
+    "electron:build": "npm run build && tsc -p tsconfig.electron.json && electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "eslintConfig": {
     "extends": [
@@ -67,6 +67,7 @@
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.17",
     "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
     "electron": "^31.0.2",
     "electron-builder": "^24.13.3",
     "electron-is-dev": "^3.0.1",

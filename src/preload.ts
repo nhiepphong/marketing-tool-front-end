@@ -1,7 +1,12 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  scrapeFacebook: (url, cookies, searchType, interactions) =>
+  scrapeFacebook: (
+    url: string,
+    cookies: string,
+    searchType: string,
+    interactions: string
+  ) =>
     ipcRenderer.invoke(
       "scrape-facebook",
       url,
@@ -9,6 +14,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       searchType,
       interactions
     ),
-  getPhoneNumber: (uid) => ipcRenderer.invoke("get-phone-number", uid),
-  getCurrentWindow: () => BrowserWindow.getFocusedWindow(),
+  getPhoneNumber: (uid: string) => ipcRenderer.invoke("get-phone-number", uid),
 });
+
+export {};
