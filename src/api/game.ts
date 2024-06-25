@@ -3,7 +3,7 @@ import Api from "./api";
 
 export const postGetListWinner = async (params: any) => {
   try {
-    const reqUrl = URL_API.GET_LIST_WINNER;
+    const reqUrl = URL_API.BUY_PACKAGE;
     const res = await Api.post(reqUrl, params);
     //console.log("getUserInfoByAPI", res);
     return res;

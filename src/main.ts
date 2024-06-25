@@ -1,9 +1,9 @@
-import { app, BrowserWindow } from "electron";
-import path from "path";
+import { app, BrowserWindow, ipcMain } from "electron";
+import * as path from "path";
+import * as isDev from "electron-is-dev";
+import { runPuppeteer } from "./controllers/puppeteer";
 
-const isDev = await import("electron-is-dev").then((module) => module.default);
-
-let mainWindow;
+let mainWindow: BrowserWindow | null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -11,6 +11,10 @@ function createWindow() {
     height: 760,
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
+      // nodeIntegration: false,
+      // contextIsolation: true,
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
@@ -42,3 +46,10 @@ app.on("activate", () => {
     createWindow();
   }
 });
+
+ipcMain.handle("run-puppeteer", async () => {
+  return await runPuppeteer();
+});
+
+// Chỉ gọi runPuppeteer khi cần thiết, không gọi ngay khi khởi động
+// console.log(await runPuppeteer());

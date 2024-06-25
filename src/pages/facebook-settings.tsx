@@ -5,7 +5,11 @@ const FacebookSettings: React.FC = () => {
   const [cookies, setCookies] = useState<string | null>(null);
   const [facebookPageUrl, setFacebookPageUrl] = useState<string | null>(null);
 
-  useEffect(() => {}, [cookies]);
+  useEffect(() => {
+    if (cookies) {
+      console.log("Cookies changed", cookies);
+    }
+  }, [cookies]);
 
   const handleCookieChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCookies(event.target.value);
