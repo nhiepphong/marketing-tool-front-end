@@ -29,16 +29,20 @@ function createWindow() {
     },
   });
 
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        "Content-Security-Policy": [
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;",
-        ],
-      },
-    });
-  });
+  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  //   callback({
+  //     responseHeaders: {
+  //       ...details.responseHeaders,
+  //       "Content-Security-Policy": [
+  //         "default-src 'self'; " +
+  //           "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+  //           "style-src 'self' 'unsafe-inline'; " +
+  //           "connect-src 'self' http://192.168.1.16:8000; " + // Thêm địa chỉ IP và cổng cụ thể vào đây
+  //           "img-src 'self' data: https:;",
+  //       ],
+  //     },
+  //   });
+  // });
 
   if (isDev) {
     mainWindow.loadURL("http://localhost:3000");
@@ -107,6 +111,7 @@ ipcMain.handle(
         searchType,
         interactions
       );
+      console.log("scrape-facebook result:", result);
       return result;
     } catch (error) {
       console.error("Error in scrapeFacebook:", error);

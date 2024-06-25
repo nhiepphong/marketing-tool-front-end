@@ -7,8 +7,21 @@ interface UserData {
   phone: string | null;
 }
 
+declare global {
+  interface Window {
+    electronAPI: {
+      scrapeFacebook: (
+        url: string,
+        cookies: string,
+        searchType: string,
+        interactions: number
+      ) => Promise<string>;
+    };
+  }
+}
+
 const FacebookLayUID: React.FC = () => {
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState("https://www.facebook.com/TungZone.Dev");
   const [userData, setUserData] = useState<UserData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchType, setSearchType] = useState("personal");
@@ -19,8 +32,22 @@ const FacebookLayUID: React.FC = () => {
   });
   const itemsPerPage = 10;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cookies =
+      "sb=ZtkwZkBf5OXZZghEcPZVNdm7;datr=Z9kwZiudW8Y6rpF1CJXm6qaS;ps_n=1;ps_l=1;c_user=100007563064463;xs=4%3AIwxfUFkqQFMJsw%3A2%3A1715329181%3A-1%3A7258%3A%3AAcUNTuPKVeAsa6KangG6q1we1RHjrEtB-a3DB2Mo0Cs;dpr=1;wd=1591x905;fr=11t08DKrL4E7zwL8M.AWVeymDgl8Vsba82MmVMttkyIEY.Bmet5U..AAA.0.0.Bmet7L.AWUuBangs50;presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1719328461659%2C%22v%22%3A1%7D;";
+
+    try {
+      const result = await window.electronAPI.scrapeFacebook(
+        url,
+        cookies,
+        "",
+        0
+      );
+      console.log("handleSubmit", result);
+    } catch (error) {
+      console.error("Error:", error);
+    }
     // Giả lập dữ liệu từ server
     const mockData = Array.from({ length: 50 }, (_, i) => ({
       id: i + 1,
@@ -29,8 +56,6 @@ const FacebookLayUID: React.FC = () => {
       phone: i % 3 === 0 ? null : `0123456${i.toString().padStart(3, "0")}`,
     }));
     setUserData(mockData);
-    console.log("Search Type:", searchType);
-    console.log("Interactions:", interactions);
   };
 
   const handleGetPhone = (uid: string) => {
