@@ -107,27 +107,33 @@ function App() {
     if (dataUser) {
       getNewToken();
     }
+
+    const intervalId = setInterval(getNewToken, 3 * 60 * 1000); // 3 phút
+    // Cleanup function để clear interval khi component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const getNewToken = async () => {
-    setIsNeedGetNewToken(false);
-    const result = await getNewTokenByAPI(
-      { refreshToken: dataUser.token.refreshToken },
-      dataUser.token.accessToken
-    );
-
-    if (result?.status === 200) {
-      dispatch(
-        updateData({
-          token: {
-            refreshToken: dataUser.token.refreshToken,
-            accessToken: result.data.accessToken,
-          },
-          user: dataUser.user,
-        } as any)
+    if (dataUser) {
+      setIsNeedGetNewToken(false);
+      const result = await getNewTokenByAPI(
+        { refreshToken: dataUser.token.refreshToken },
+        dataUser.token.accessToken
       );
-    } else if (result?.status === 403) {
-      dispatch(logout());
+
+      if (result?.status === 200) {
+        dispatch(
+          updateData({
+            token: {
+              refreshToken: dataUser.token.refreshToken,
+              accessToken: result.data.accessToken,
+            },
+            user: dataUser.user,
+          } as any)
+        );
+      } else if (result?.status === 403) {
+        dispatch(logout());
+      }
     }
   };
 

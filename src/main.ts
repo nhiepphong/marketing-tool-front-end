@@ -1,7 +1,14 @@
 import { app, BrowserWindow, ipcMain, protocol, session } from "electron";
 import path from "path";
-import { scrapeFacebook } from "./controllers/puppeteer";
+import {
+  facebookGetUIDFromLinkArticle,
+  facebookGetUIDFromProfile,
+} from "./controllers/puppeteer";
 import fs from "fs";
+import { promisify } from "util";
+
+const readFileAsync = promisify(fs.readFile);
+const writeFileAsync = promisify(fs.writeFile);
 
 const isDev = true;
 console.log("isDev (using app.isPackaged):", isDev);
@@ -96,26 +103,57 @@ app.on("activate", () => {
 });
 
 ipcMain.handle(
-  "scrape-facebook",
-  async (
-    event,
-    url: string,
-    cookies: string,
-    searchType: string,
-    interactions: number
-  ) => {
+  "facebook-get-uid-from-profile",
+  async (event, url: string, cookies: string) => {
     try {
-      const result = await scrapeFacebook(
-        url,
-        cookies,
-        searchType,
-        interactions
-      );
-      console.log("scrape-facebook result:", result);
+      const result = await facebookGetUIDFromProfile(url, cookies);
+      console.log("facebook-get-uid-from-profile result:", result);
       return result;
     } catch (error) {
-      console.error("Error in scrapeFacebook:", error);
+      console.error("Error in facebookGetUIDFromProfile:", error);
       throw error;
     }
   }
 );
+
+ipcMain.handle(
+  "facebook-get-uid-from-article",
+  async (event, url: string, cookies: string, interactions: any) => {
+    try {
+      const result = await facebookGetUIDFromLinkArticle(
+        mainWindow,
+        url,
+        cookies,
+        interactions
+      );
+      console.log("facebook-get-uid-from-article:", result);
+      return result;
+    } catch (error) {
+      console.error("Error in facebookGetUIDFromLinkArticle:", error);
+      throw error;
+    }
+  }
+);
+
+const cookieFilePath = path.join(
+  app.getPath("userData"),
+  "facebook_cookie.txt"
+);
+
+ipcMain.handle("read-cookie-file", async () => {
+  try {
+    console.log("Reading cookie file from:", cookieFilePath);
+    const cookie = await readFileAsync(cookieFilePath, "utf-8");
+    return cookie;
+  } catch (error: unknown) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      // File không tồn tại, trả về chuỗi rỗng
+      return "";
+    }
+    throw error;
+  }
+});
+
+ipcMain.handle("save-cookie-file", async (event, cookie: string) => {
+  await writeFileAsync(cookieFilePath, cookie, "utf-8");
+});

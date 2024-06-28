@@ -1,29 +1,36 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { getPhoneFromUIDByAPI } from "../api/facebook";
+import { useSelector } from "react-redux";
+import { getUserData } from "../redux/slices/userSlices";
+import { showToast } from "../utils/showToast";
+import DataContext from "../context/DataContext";
+import { set } from "animejs";
 
 interface UserData {
   id: number;
   name: string;
   uid: string;
+  gender: string;
+  link: string;
   phone: string | null;
-}
-
-declare global {
-  interface Window {
-    electronAPI: {
-      scrapeFacebook: (
-        url: string,
-        cookies: string,
-        searchType: string,
-        interactions: number
-      ) => Promise<string>;
-    };
-  }
+  type: string | "";
 }
 
 const FacebookLayUID: React.FC = () => {
-  const [url, setUrl] = useState("https://www.facebook.com/TungZone.Dev");
+  const [url, setUrl] = useState(
+    "https://www.facebook.com/watch?v=7560172530769474"
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [cookie, setCookie] = useState("");
+
+  const { setIsNeedGetNewToken } = useContext(DataContext)!;
+
+  const [isAutoGetPhone, setIsAutoGetPhone] = useState(false);
+  const [currentItemGetPhone, setCurrentItemGetPhone] = useState(-1);
+
+  const dataUser = useSelector(getUserData);
   const [userData, setUserData] = useState<UserData[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchType, setSearchType] = useState("personal");
   const [interactions, setInteractions] = useState({
     like: false,
@@ -31,35 +38,174 @@ const FacebookLayUID: React.FC = () => {
     share: false,
   });
   const itemsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [indexOfLastItem, setIndexOfLastItem] = useState(0);
+  const [indexOfFirstItem, setIndexOfFirstItem] = useState(0);
+  const [currentItems, setCurrentItems] = useState<UserData[]>([]);
+
+  useEffect(() => {
+    window.electronAPI.readCookieFile().then((savedCookie: string) => {
+      setCookie(savedCookie);
+    });
+  }, []);
+
+  useEffect(() => {
+    // Đăng ký listener cho updates
+    window.electronAPI.onUpdateDataGetUIDArticle((event, data) => {
+      console.log("onUpdateDataGetUIDArticle", data);
+      setUserData(data);
+    });
+    // Cleanup listener khi component unmount
+    return () => {
+      // Remove listener (nếu cần)
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cookies =
-      "sb=ZtkwZkBf5OXZZghEcPZVNdm7;datr=Z9kwZiudW8Y6rpF1CJXm6qaS;ps_n=1;ps_l=1;c_user=100007563064463;xs=4%3AIwxfUFkqQFMJsw%3A2%3A1715329181%3A-1%3A7258%3A%3AAcUNTuPKVeAsa6KangG6q1we1RHjrEtB-a3DB2Mo0Cs;dpr=1;wd=1591x905;fr=11t08DKrL4E7zwL8M.AWVeymDgl8Vsba82MmVMttkyIEY.Bmet5U..AAA.0.0.Bmet7L.AWUuBangs50;presence=C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1719328461659%2C%22v%22%3A1%7D;";
-
-    try {
-      const result = await window.electronAPI.scrapeFacebook(
-        url,
-        cookies,
-        "",
-        0
-      );
-      console.log("handleSubmit", result);
-    } catch (error) {
-      console.error("Error:", error);
+    if (cookie === "") {
+      return showToast({
+        type: "error",
+        message: "Vui lòng nhập cookie ở tab Settings",
+      });
     }
-    // Giả lập dữ liệu từ server
-    const mockData = Array.from({ length: 50 }, (_, i) => ({
-      id: i + 1,
-      name: `User ${i + 1}`,
-      uid: `10000${i + 1}`,
-      phone: i % 3 === 0 ? null : `0123456${i.toString().padStart(3, "0")}`,
-    }));
-    setUserData(mockData);
+    if (url === "") {
+      return showToast({
+        type: "error",
+        message: "Vui lòng nhập link facebook để lấy UID",
+      });
+    }
+    setUserData([]);
+    setIsLoading(true);
+    setAlertMessage("Đang lấy UID, vui lòng chờ...");
+
+    if (searchType === "personal") {
+      getUIDFromLinkProfile();
+    } else {
+      getUIDFromLinkArticle();
+    }
   };
 
-  const handleGetPhone = (uid: string) => {
-    console.log(`Getting phone for UID: ${uid}`);
+  const getUIDFromLinkProfile = async () => {
+    try {
+      const result = await window.electronAPI.facebookGetUIDFromProfile(
+        url,
+        cookie
+      );
+      console.log("handleSubmit", result);
+      if (result !== null) {
+        setUserData([result]);
+      } else {
+        showToast({ type: "error", message: "Không tìm thấy UID" });
+      }
+      setIsLoading(false);
+      setAlertMessage("");
+    } catch (error) {
+      console.error("Error:", error);
+      setIsLoading(false);
+      setAlertMessage("Lấy UID, bị lỗi");
+    }
+  };
+
+  const getUIDFromLinkArticle = async () => {
+    try {
+      const result = await window.electronAPI.facebookGetUIDFromLinkArticle(
+        url,
+        cookie,
+        interactions
+      );
+      console.log("getUIDFromLinkArticle", result);
+      if (result !== null) {
+        //setUserData(result);
+      } else {
+        showToast({ type: "error", message: "Không tìm thấy UID" });
+      }
+      setIsLoading(false);
+      setAlertMessage("");
+    } catch (error) {
+      console.error("Error:", error);
+      setIsLoading(false);
+      setAlertMessage("Lấy UID, bị lỗi");
+    }
+  };
+
+  useEffect(() => {
+    if (userData.length > 0) {
+      const _currentPage = 1;
+      const _indexOfLastItem = _currentPage * itemsPerPage;
+      const _indexOfFirstItem = _indexOfLastItem - itemsPerPage;
+      const _currentItems = userData.slice(_indexOfFirstItem, _indexOfLastItem);
+
+      setCurrentPage(_currentPage);
+      setIndexOfLastItem(_indexOfLastItem);
+      setIndexOfFirstItem(_indexOfFirstItem);
+      setCurrentItems(_currentItems);
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    if (userData.length > 0) {
+      const _currentPage = currentPage;
+      const _indexOfLastItem = _currentPage * itemsPerPage;
+      const _indexOfFirstItem = _indexOfLastItem - itemsPerPage;
+      const _currentItems = userData.slice(_indexOfFirstItem, _indexOfLastItem);
+
+      setIndexOfLastItem(_indexOfLastItem);
+      setIndexOfFirstItem(_indexOfFirstItem);
+      setCurrentItems(_currentItems);
+    }
+  }, [currentPage]);
+
+  useEffect(() => {
+    if (isAutoGetPhone) {
+      if (currentItemGetPhone < userData.length) {
+        handleGetPhone(userData[currentItemGetPhone]);
+      } else {
+        showToast({ type: "success", message: "Đã lấy xong số điện thoại" });
+      }
+    }
+  }, [isAutoGetPhone, currentItemGetPhone]);
+
+  const getIndexInUserData = (uid: string) => {
+    return userData.findIndex((item) => item.uid === uid);
+  };
+
+  const handleGetPhone = async (item: UserData) => {
+    const index = getIndexInUserData(item.uid);
+    setCurrentItemGetPhone(index);
+    await getPhoneFromUID(item);
+
+    if (isAutoGetPhone) {
+      setCurrentItemGetPhone(index + 1);
+    } else {
+      setCurrentItemGetPhone(-1);
+    }
+  };
+
+  const getPhoneFromUID = async (item: UserData) => {
+    const result: any = await getPhoneFromUIDByAPI(
+      item,
+      dataUser.token.accessToken
+    );
+    if (result !== null) {
+      if (result.status === 200) {
+        if ((result.data.status = true)) {
+          const phones = result.data.data.phones;
+          let _phones = phones.map((phone: any) => phone.number);
+          userData[getIndexInUserData(item.uid)].phone = _phones.join(", ");
+          setUserData([...userData]);
+        } else {
+          showToast({ type: "error", message: result.data.message });
+        }
+      }
+      if (result.status === 403) {
+        setIsNeedGetNewToken(true);
+      } else {
+        showToast({ type: "error", message: result.data.message });
+      }
+    } else {
+      showToast({ type: "error", message: "Có lỗi xảy ra vui lòng thử lại" });
+    }
   };
 
   const handleExportExcel = () => {
@@ -72,10 +218,6 @@ const FacebookLayUID: React.FC = () => {
       [e.target.name]: e.target.checked,
     });
   };
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = userData.slice(indexOfFirstItem, indexOfLastItem);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -99,9 +241,10 @@ const FacebookLayUID: React.FC = () => {
           />
           <button
             type="submit"
+            disabled={isLoading}
             className="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Get
+            {isLoading ? "..." : "Get"}
           </button>
         </div>
 
@@ -129,6 +272,14 @@ const FacebookLayUID: React.FC = () => {
             <span className="ml-2">Trang bài viết</span>
           </label>
         </div>
+
+        {alertMessage !== "" ? (
+          <div className="mb-4 text-center text-[green]">
+            <p className="bg-gray-100 px-4 py-2 rounded">{alertMessage}</p>
+          </div>
+        ) : (
+          <></>
+        )}
 
         {searchType === "post" && (
           <div className="ml-6 mb-4">
@@ -170,19 +321,23 @@ const FacebookLayUID: React.FC = () => {
         <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">Kết quả</h2>
-            <button
-              onClick={handleExportExcel}
-              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              Export Excel
-            </button>
+            {isLoading ? (
+              <></>
+            ) : (
+              <button
+                onClick={handleExportExcel}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                Export Excel
+              </button>
+            )}
           </div>
           <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 mb-4">
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID
+                    STT
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Tên
@@ -196,10 +351,10 @@ const FacebookLayUID: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentItems.map((user) => (
-                  <tr key={user.id}>
+                {currentItems.map((user, index: number) => (
+                  <tr key={indexOfFirstItem + index + 1}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.id}
+                      {indexOfFirstItem + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.name}
@@ -210,9 +365,13 @@ const FacebookLayUID: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {user.phone ? (
                         user.phone
+                      ) : currentItemGetPhone === indexOfFirstItem + index ? (
+                        <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs">
+                          Loading..
+                        </button>
                       ) : (
                         <button
-                          onClick={() => handleGetPhone(user.uid)}
+                          onClick={() => handleGetPhone(user)}
                           className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs"
                         >
                           Get Phone

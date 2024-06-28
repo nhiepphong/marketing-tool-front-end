@@ -47,3 +47,38 @@ export function parseCookieString(cookieString: string) {
     };
   });
 }
+
+export function getGenderParsed(gender: string) {
+  if (gender.toUpperCase() == "FEMALE") {
+    return "Nữ";
+  } else if (gender.toUpperCase() == "MALE") {
+    return "Nam";
+  } else if (gender.toUpperCase() == "NAM") {
+    return "Nam";
+  } else if (gender.toUpperCase() == "NỮ") {
+    return "Nữ";
+  }
+
+  return gender;
+}
+
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function getRandomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function cleanFacebookUrl(url: string): string {
+  try {
+    const parsedUrl = new URL(url);
+    const searchParams = new URLSearchParams(parsedUrl.search);
+    searchParams.delete("__tn__");
+    parsedUrl.search = searchParams.toString();
+    return parsedUrl.toString();
+  } catch (error) {
+    console.error("Error cleaning URL:", error);
+    return url; // Trả về URL gốc nếu có lỗi
+  }
+}
