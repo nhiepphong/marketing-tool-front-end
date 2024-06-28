@@ -5,6 +5,7 @@ import { getUserData } from "../redux/slices/userSlices";
 import { showToast } from "../utils/showToast";
 import DataContext from "../context/DataContext";
 import { set } from "animejs";
+import Pagination from "../components/Pagination";
 
 interface UserData {
   id: number;
@@ -18,7 +19,7 @@ interface UserData {
 
 const FacebookLayUID: React.FC = () => {
   const [url, setUrl] = useState(
-    "https://www.facebook.com/watch?v=7560172530769474"
+    "https://www.facebook.com/rockwaterbay/posts/pfbid0381kU9cju76zs4LToXTLp9HTzVUkBDYC9YEe36d5HMCfEpxnv8jYrS8ew79ofuskpl"
   );
   const [isLoading, setIsLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -320,7 +321,9 @@ const FacebookLayUID: React.FC = () => {
       {userData.length > 0 && (
         <>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Kết quả</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              Kết quả ({userData.length})
+            </h2>
             {isLoading ? (
               <></>
             ) : (
@@ -383,24 +386,11 @@ const FacebookLayUID: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <div className="flex justify-center">
-            {Array.from(
-              { length: Math.ceil(userData.length / itemsPerPage) },
-              (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => paginate(i + 1)}
-                  className={`mx-1 px-3 py-1 rounded ${
-                    currentPage === i + 1
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              )
-            )}
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(userData.length / itemsPerPage)}
+            onPageChange={paginate}
+          />
         </>
       )}
     </>
