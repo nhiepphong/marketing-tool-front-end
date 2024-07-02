@@ -376,7 +376,13 @@ export async function facebookGetUIDFromLinkArticleVideo(
             }
             await sleep(getRandomInt(1, 2) * 1000);
             allElements.push(item);
-            console.log(`item ${item}`);
+            // Gửi dữ liệu mới về renderer process
+            if (mainWindow) {
+              mainWindow.webContents.send(
+                "update-data-get-uid-article",
+                allElements
+              );
+            }
           }
         }
         previousLength = result.items.length;
@@ -722,7 +728,13 @@ export async function facebookGetUIDFromLinkArticlePost(
               }
               await sleep(getRandomInt(1, 2) * 1000);
               allElements.push(item);
-              console.log(`item ${item}`);
+              // Gửi dữ liệu mới về renderer process
+              if (mainWindow) {
+                mainWindow.webContents.send(
+                  "update-data-get-uid-article",
+                  allElements
+                );
+              }
             }
           }
           previousLength = result.items.length;
@@ -897,6 +909,9 @@ async function getListURLProfileFromPopupUser(
         await sleep(2000);
       }
       tmp_arr.push(item);
+      if (mainWindow) {
+        mainWindow.webContents.send("update-data-get-uid-article", tmp_arr);
+      }
     }
     //console.log(`Total unique elements collected: ${allElements.length}`);
     //console.log(`tmp_arr: ${tmp_arr.length}`);

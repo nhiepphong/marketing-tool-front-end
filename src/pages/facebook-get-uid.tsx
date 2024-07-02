@@ -274,14 +274,6 @@ const FacebookLayUID: React.FC = () => {
           </label>
         </div>
 
-        {alertMessage !== "" ? (
-          <div className="mb-4 text-center text-[green]">
-            <p className="bg-gray-100 px-4 py-2 rounded">{alertMessage}</p>
-          </div>
-        ) : (
-          <></>
-        )}
-
         {searchType === "post" && (
           <div className="ml-6 mb-4">
             <label className="inline-flex items-center mr-4">
@@ -304,19 +296,17 @@ const FacebookLayUID: React.FC = () => {
               />
               <span className="ml-2">Comment</span>
             </label>
-            <label className="inline-flex items-center">
-              <input
-                type="checkbox"
-                className="form-checkbox"
-                name="share"
-                checked={interactions.share}
-                onChange={handleInteractionChange}
-              />
-              <span className="ml-2">Share</span>
-            </label>
           </div>
         )}
       </form>
+
+      {alertMessage !== "" ? (
+        <div className="mb-4 text-center text-[green]">
+          <p className="bg-gray-100 px-4 py-2 rounded">{alertMessage}</p>
+        </div>
+      ) : (
+        <></>
+      )}
 
       {userData.length > 0 && (
         <>
