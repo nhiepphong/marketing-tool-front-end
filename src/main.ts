@@ -6,11 +6,15 @@ import {
 } from "./controllers/puppeteer";
 import fs from "fs";
 import { promisify } from "util";
+import log from "electron-log";
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
-const isDev = true;
+log.transports.file.level = "info";
+log.info("Application starting...");
+
+const isDev = false;
 console.log("isDev (using app.isPackaged):", isDev);
 console.log("process.env.NODE_ENV:", process.env.NODE_ENV);
 
@@ -32,9 +36,13 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
       preload: path.join(__dirname, "preload.js"),
     },
   });
+
+  console.log("preload", __dirname, "preload.js");
 
   // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
   //   callback({
@@ -56,10 +64,14 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     const indexPath = path.join(app.getAppPath(), "build", "index.html");
-    console.log("Loading index.html from:", indexPath);
 
-    mainWindow.loadFile(indexPath);
-
+    //mainWindow.loadFile(indexPath);
+    mainWindow.loadURL(`file://${path.join(__dirname, "../build/index.html")}`);
+    console.log("indexPath", indexPath);
+    console.log(
+      "loadURL",
+      `file://${path.join(__dirname, "../build/index.html")}`
+    );
     // Xử lý các yêu cầu file
     mainWindow.webContents.session.protocol.interceptFileProtocol(
       "file",
@@ -76,6 +88,19 @@ function createWindow() {
       }
     );
 
+    mainWindow.webContents.on("did-start-loading", () => {
+      console.log("Started loading");
+    });
+    mainWindow.webContents.on("did-finish-load", () => {
+      console.log("Finished loading");
+    });
+    mainWindow.webContents.on(
+      "did-fail-load",
+      (event, errorCode, errorDescription) => {
+        console.error("Failed to load:", errorCode, errorDescription);
+      }
+    );
+
     // Mở DevTools trong production để debug
     mainWindow.webContents.openDevTools();
   }
@@ -84,9 +109,13 @@ function createWindow() {
 app.on("ready", () => {
   protocol.registerFileProtocol("file", (request, callback) => {
     const url = request.url.substr(7); // remove "file://"
+    console.log("ready", path.normalize(`${__dirname}/${url}`));
     callback({ path: path.normalize(`${__dirname}/${url}`) });
   });
-
+  protocol.registerFileProtocol("app", (request, callback) => {
+    const url = request.url.substr(6);
+    callback({ path: path.normalize(`${__dirname}/${url}`) });
+  });
   createWindow();
 });
 

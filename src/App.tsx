@@ -89,9 +89,9 @@ const router = createHashRouter([
   },
 ]);
 
-if (process.env.NODE_ENV === "production") {
-  console.log = () => {};
-}
+// if (process.env.NODE_ENV === "production") {
+//   console.log = () => {};
+// }
 
 function App() {
   const dataUser = useSelector(getUserData);
