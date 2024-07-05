@@ -14,4 +14,5 @@ export interface ElectronAPI {
   ) => void;
   readCookieFile: () => Promise<string>;
   saveCookieFile: (cookie: string) => Promise<void>;
+  stopRunTask: () => Promise<void>;
 }

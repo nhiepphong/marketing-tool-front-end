@@ -15,19 +15,10 @@ const writeFileAsync = promisify(fs.writeFile);
 log.transports.file.level = "info";
 log.info("Application starting...");
 
-const isDev = !app.isPackaged;
-//const isDev = true;
-console.log("isDev (using app.isPackaged):", isDev);
-console.log("process.env.NODE_ENV:", process.env.NODE_ENV);
+//const isDev = !app.isPackaged;
+const isDev = false;
 
-// Sử dụng import động
-// import("electron-is-dev")
-//   .then((isDevModule) => {
-//     isDev = isDevModule.default;
-//   })
-//   .catch((err) => {
-//     console.error("Failed to import electron-is-dev:", err);
-//   });
+let isScrapingStopped = false;
 
 let mainWindow: BrowserWindow | null;
 
@@ -49,6 +40,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "..", "build", "index.html"));
+    mainWindow.webContents.openDevTools();
   }
 
   mainWindow.on("closed", () => {
@@ -76,6 +68,7 @@ ipcMain.handle(
   "facebook-get-uid-from-profile",
   async (event, url: string, cookies: string) => {
     try {
+      isScrapingStopped = false;
       const result = await facebookGetUIDFromProfile(url, cookies);
       console.log("facebook-get-uid-from-profile result:", result);
       return result;
@@ -90,7 +83,11 @@ ipcMain.handle(
   "facebook-get-uid-from-article",
   async (event, url: string, cookies: string, interactions: any) => {
     try {
+      isScrapingStopped = false;
       const result = await facebookGetUIDFromLinkArticle(
+        {
+          isStopRequested: () => isScrapingStopped,
+        },
         mainWindow,
         url,
         cookies,
@@ -126,4 +123,10 @@ ipcMain.handle("read-cookie-file", async () => {
 
 ipcMain.handle("save-cookie-file", async (event, cookie: string) => {
   await writeFileAsync(cookieFilePath, cookie, "utf-8");
+});
+
+ipcMain.handle("stop-run-task", async (event) => {
+  console.log("isScrapingStopped 1:", isScrapingStopped);
+  isScrapingStopped = true;
+  console.log("isScrapingStopped 2:", isScrapingStopped);
 });

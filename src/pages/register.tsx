@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { ImageButton, PasswordInput, TextInput } from "../components";
 import { getUserData, updateData } from "../redux/slices/userSlices";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { showToast } from "../utils/showToast";
 import { postRegister } from "../api/user";
 import { URL_API } from "../constants/api";
@@ -166,12 +166,12 @@ export default function Register() {
               >
                 Đăng ký
               </button>
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="text-sm text-blue-600 hover:underline"
               >
                 Đăng nhập
-              </a>
+              </Link>
             </div>
           </div>
         </form>

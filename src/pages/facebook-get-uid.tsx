@@ -45,13 +45,11 @@ const FacebookLayUID: React.FC = () => {
   const [currentItems, setCurrentItems] = useState<UserData[]>([]);
 
   useEffect(() => {
+    // Đăng ký listener cho updates
+    console.log("Init");
     window.electronAPI.readCookieFile().then((savedCookie: string) => {
       setCookie(savedCookie);
     });
-  }, []);
-
-  useEffect(() => {
-    // Đăng ký listener cho updates
     window.electronAPI.onUpdateDataGetUIDArticle((event, data) => {
       console.log("onUpdateDataGetUIDArticle", data);
       setUserData(data);
@@ -59,6 +57,10 @@ const FacebookLayUID: React.FC = () => {
     // Cleanup listener khi component unmount
     return () => {
       // Remove listener (nếu cần)
+      if (isLoading) {
+        console.log("Stop");
+        window.electronAPI.stopRunTask();
+      }
     };
   }, []);
 
@@ -117,7 +119,7 @@ const FacebookLayUID: React.FC = () => {
       );
       console.log("getUIDFromLinkArticle", result);
       if (result !== null) {
-        //setUserData(result);
+        setUserData(result);
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
       }
@@ -222,6 +224,12 @@ const FacebookLayUID: React.FC = () => {
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
+  const onStop = () => {
+    window.electronAPI.stopRunTask();
+    setIsLoading(false);
+    setAlertMessage("Dừng lấy thông tin");
+  };
+
   return (
     <>
       <h1 className="text-3xl font-bold text-gray-800 mb-4">
@@ -231,7 +239,7 @@ const FacebookLayUID: React.FC = () => {
         Nhập URL Facebook vào ô bên dưới và nhấn Get để lấy UID.
       </p>
 
-      <form onSubmit={handleSubmit} className="mb-8">
+      <form onSubmit={handleSubmit} className="mb-4">
         <div className="flex mb-4">
           <input
             type="text"
@@ -275,7 +283,7 @@ const FacebookLayUID: React.FC = () => {
         </div>
 
         {searchType === "post" && (
-          <div className="ml-6 mb-4">
+          <div className="ml-6 mb-2">
             <label className="inline-flex items-center mr-4">
               <input
                 type="checkbox"
@@ -298,12 +306,32 @@ const FacebookLayUID: React.FC = () => {
             </label>
           </div>
         )}
+        <p>
+          <i className="text-[10px]">
+            Khi bấm lấy thông tin khuyến cáo không nên chuyển sang tab khác.
+            <br />
+            Để hệ thống tự động lấy hoặc bấm STOP để dừng để đảm bảo nội dung
+            lấy về được chính xác và không gây ra lỗi.
+          </i>
+        </p>
       </form>
 
       {alertMessage !== "" ? (
         <div className="mb-4 text-center text-[green]">
           <p className="bg-gray-100 px-4 py-2 rounded">{alertMessage}</p>
         </div>
+      ) : (
+        <></>
+      )}
+
+      {isLoading ? (
+        <button
+          onClick={onStop}
+          className="px-4 py-2 w-full text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+          type="submit"
+        >
+          STOP
+        </button>
       ) : (
         <></>
       )}

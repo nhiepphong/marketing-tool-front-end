@@ -100,12 +100,12 @@ export default function Login() {
               >
                 Đăng nhập
               </button>
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 className="text-sm text-blue-600 hover:underline"
               >
                 Đăng ký
-              </a>
+              </Link>
             </div>
             <div className="mt-6 text-center">
               <Link

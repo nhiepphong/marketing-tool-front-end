@@ -10,6 +10,9 @@ interface RESULT_PAGE {
   browser: Browser;
   page: Page;
 }
+interface ScrapingOptions {
+  isStopRequested: () => boolean;
+}
 export async function facebookGetUIDFromProfile(
   url: string,
   cookieString: string
@@ -102,6 +105,7 @@ export async function facebookGetUIDFromProfile(
 }
 
 export async function facebookGetUIDFromLinkArticle(
+  option: ScrapingOptions,
   mainWindow: any,
   url: string,
   cookieString: string,
@@ -109,6 +113,7 @@ export async function facebookGetUIDFromLinkArticle(
 ): Promise<any> {
   if (url.includes("watch?v=")) {
     return facebookGetUIDFromLinkArticleVideo(
+      option,
       mainWindow,
       url,
       cookieString,
@@ -116,6 +121,7 @@ export async function facebookGetUIDFromLinkArticle(
     );
   } else {
     return facebookGetUIDFromLinkArticlePost(
+      option,
       mainWindow,
       url,
       cookieString,
@@ -126,6 +132,7 @@ export async function facebookGetUIDFromLinkArticle(
 
 //https://www.facebook.com/watch?v=7560172530769474
 export async function facebookGetUIDFromLinkArticleVideo(
+  option: ScrapingOptions,
   mainWindow: any,
   url: string,
   cookieString: string,
@@ -160,6 +167,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
 
       // 3. Lấy tất cả các phần tử của popup user
       let _allElements: any[] = await getListURLProfileFromPopupUser(
+        option,
         page,
         mainWindow,
         cookieString
@@ -377,6 +385,10 @@ export async function facebookGetUIDFromLinkArticleVideo(
             await sleep(getRandomInt(1, 2) * 1000);
             allElements.push(item);
             // Gửi dữ liệu mới về renderer process
+            console.log("Update 388", option.isStopRequested());
+            if (option.isStopRequested()) {
+              break;
+            }
             if (mainWindow) {
               mainWindow.webContents.send(
                 "update-data-get-uid-article",
@@ -407,7 +419,10 @@ export async function facebookGetUIDFromLinkArticleVideo(
         // Đợi để trang load thêm nội dung
         await sleep((getRandomInt(1, 4) + 2) * 1000);
 
-        // Gửi dữ liệu mới về renderer process
+        console.log("Update 422", option.isStopRequested());
+        if (option.isStopRequested()) {
+          break;
+        }
         if (mainWindow) {
           mainWindow.webContents.send(
             "update-data-get-uid-article",
@@ -415,6 +430,9 @@ export async function facebookGetUIDFromLinkArticleVideo(
           );
         }
         if (result.hasMore == false) {
+          break;
+        }
+        if (option.isStopRequested()) {
           break;
         }
         // Đợi để trang load thêm nội dung
@@ -432,6 +450,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
 
 //https://www.facebook.com/rockwaterbay/posts/pfbid0381kU9cju76zs4LToXTLp9HTzVUkBDYC9YEe36d5HMCfEpxnv8jYrS8ew79ofuskpl
 export async function facebookGetUIDFromLinkArticlePost(
+  option: ScrapingOptions,
   mainWindow: any,
   url: string,
   cookieString: string,
@@ -498,6 +517,7 @@ export async function facebookGetUIDFromLinkArticlePost(
       let _allElements: any[] = [];
       try {
         _allElements = await getListURLProfileFromPopupUser(
+          option,
           page,
           mainWindow,
           cookieString
@@ -729,6 +749,10 @@ export async function facebookGetUIDFromLinkArticlePost(
               await sleep(getRandomInt(1, 2) * 1000);
               allElements.push(item);
               // Gửi dữ liệu mới về renderer process
+              console.log("Update 748", option.isStopRequested());
+              if (option.isStopRequested()) {
+                break;
+              }
               if (mainWindow) {
                 mainWindow.webContents.send(
                   "update-data-get-uid-article",
@@ -748,6 +772,10 @@ export async function facebookGetUIDFromLinkArticlePost(
           // Đợi để trang load thêm nội dung
           await sleep((getRandomInt(1, 4) + 2) * 1000);
 
+          console.log("Update 771", option.isStopRequested());
+          if (option.isStopRequested()) {
+            break;
+          }
           // Gửi dữ liệu mới về renderer process
           if (mainWindow) {
             mainWindow.webContents.send(
@@ -756,6 +784,9 @@ export async function facebookGetUIDFromLinkArticlePost(
             );
           }
           if (result.hasMore == false) {
+            break;
+          }
+          if (option.isStopRequested()) {
             break;
           }
         }
@@ -806,6 +837,7 @@ async function newPageAndAddCookie(
 }
 
 async function getListURLProfileFromPopupUser(
+  option: ScrapingOptions,
   page: Page,
   mainWindow: any,
   cookieString: string
@@ -909,6 +941,10 @@ async function getListURLProfileFromPopupUser(
         await sleep(2000);
       }
       tmp_arr.push(item);
+      console.log("Update 940", option.isStopRequested());
+      if (option.isStopRequested()) {
+        break;
+      }
       if (mainWindow) {
         mainWindow.webContents.send("update-data-get-uid-article", tmp_arr);
       }
@@ -937,6 +973,10 @@ async function getListURLProfileFromPopupUser(
 
     previousLength = newElements.length;
 
+    console.log("Update 972", option.isStopRequested());
+    if (option.isStopRequested()) {
+      break;
+    }
     // Gửi dữ liệu mới về renderer process
     if (mainWindow) {
       mainWindow.webContents.send("update-data-get-uid-article", allElements);
