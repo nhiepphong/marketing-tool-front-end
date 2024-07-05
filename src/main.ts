@@ -6,15 +6,16 @@ import {
 } from "./controllers/puppeteer";
 import fs from "fs";
 import { promisify } from "util";
+import * as url from "url";
 import log from "electron-log";
-
+import { readFile } from "fs/promises";
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
 log.transports.file.level = "info";
 log.info("Application starting...");
 
-const isDev = false;
+const isDev = !app.isPackaged;
 console.log("isDev (using app.isPackaged):", isDev);
 console.log("process.env.NODE_ENV:", process.env.NODE_ENV);
 
@@ -42,80 +43,19 @@ function createWindow() {
     },
   });
 
-  console.log("preload", __dirname, "preload.js");
-
-  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-  //   callback({
-  //     responseHeaders: {
-  //       ...details.responseHeaders,
-  //       "Content-Security-Policy": [
-  //         "default-src 'self'; " +
-  //           "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-  //           "style-src 'self' 'unsafe-inline'; " +
-  //           "connect-src 'self' http://192.168.1.16:8000; " + // Thêm địa chỉ IP và cổng cụ thể vào đây
-  //           "img-src 'self' data: https:;",
-  //       ],
-  //     },
-  //   });
-  // });
-
   if (isDev) {
     mainWindow.loadURL("http://localhost:3000");
     mainWindow.webContents.openDevTools();
   } else {
-    const indexPath = path.join(app.getAppPath(), "build", "index.html");
-
-    //mainWindow.loadFile(indexPath);
-    mainWindow.loadURL(`file://${path.join(__dirname, "../build/index.html")}`);
-    console.log("indexPath", indexPath);
-    console.log(
-      "loadURL",
-      `file://${path.join(__dirname, "../build/index.html")}`
-    );
-    // Xử lý các yêu cầu file
-    mainWindow.webContents.session.protocol.interceptFileProtocol(
-      "file",
-      (request, callback) => {
-        const url = request.url.substr(7); // Loại bỏ "file://"
-        const normalizedPath = path.normalize(`${__dirname}/${url}`);
-
-        if (fs.existsSync(normalizedPath)) {
-          callback({ path: normalizedPath });
-        } else {
-          // Nếu file không tồn tại, trả về index.html
-          callback({ path: indexPath });
-        }
-      }
-    );
-
-    mainWindow.webContents.on("did-start-loading", () => {
-      console.log("Started loading");
-    });
-    mainWindow.webContents.on("did-finish-load", () => {
-      console.log("Finished loading");
-    });
-    mainWindow.webContents.on(
-      "did-fail-load",
-      (event, errorCode, errorDescription) => {
-        console.error("Failed to load:", errorCode, errorDescription);
-      }
-    );
-
-    // Mở DevTools trong production để debug
-    mainWindow.webContents.openDevTools();
+    mainWindow.loadFile(path.join(__dirname, "..", "build", "index.html"));
   }
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 }
 
-app.on("ready", () => {
-  protocol.registerFileProtocol("file", (request, callback) => {
-    const url = request.url.substr(7); // remove "file://"
-    console.log("ready", path.normalize(`${__dirname}/${url}`));
-    callback({ path: path.normalize(`${__dirname}/${url}`) });
-  });
-  protocol.registerFileProtocol("app", (request, callback) => {
-    const url = request.url.substr(6);
-    callback({ path: path.normalize(`${__dirname}/${url}`) });
-  });
+app.whenReady().then(() => {
   createWindow();
 });
 

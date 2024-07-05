@@ -22,4 +22,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("save-cookie-file", cookie),
 });
 
+console.log("preload");
 export {};
