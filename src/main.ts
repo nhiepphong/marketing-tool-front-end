@@ -16,6 +16,7 @@ log.transports.file.level = "info";
 log.info("Application starting...");
 
 const isDev = !app.isPackaged;
+//const isDev = true;
 console.log("isDev (using app.isPackaged):", isDev);
 console.log("process.env.NODE_ENV:", process.env.NODE_ENV);
 
