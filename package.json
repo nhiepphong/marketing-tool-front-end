@@ -43,7 +43,11 @@
     "electron:prod": "npm run build && cross-env NODE_ENV=production npm run build-electron && electron .",
     "electron:build": "npm run build && npm run build-electron && electron-builder build --mac --win",
     "postinstall": "electron-builder install-app-deps",
-    "electron:package:mac": "yarn build && electron-builder -m -c.extraMetadata.main=./dist/main.js"
+    "electron:package:mac:arm64": "npm run build && npm run build-electron && electron-builder build --mac --arm64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/mac-arm64",
+    "electron:package:mac:x64": "npm run build && npm run build-electron && electron-builder build --mac --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/mac-x64",
+    "electron:package:win:x64": "npm run build && npm run build-electron && electron-builder build --win --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/win-x64",
+    "electron:package:linux:x64": "npm run build && npm run build-electron && electron-builder build --linux --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/linux-x64",
+    "electron:package:all": "npm run electron:package:mac:arm64 && npm run electron:package:mac:x64 && npm run electron:package:win:x64 && npm run electron:package:linux:x64"
   },
   "eslintConfig": {
     "extends": [
@@ -103,7 +107,16 @@
       "icon": "public/assets/icon.png"
     },
     "mac": {
-      "icon": "public/assets/icon.icns"
+      "icon": "public/assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
     },
     "linux": {
       "icon": "public/assets/icon.png"
