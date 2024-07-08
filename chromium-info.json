@@ -1,0 +1,14 @@
+{
+  "win64": {
+    "executablePath": "chromium/win64/chrome.exe",
+    "revision": "latest"
+  },
+  "mac-x64": {
+    "executablePath": "chromium/mac-x64/Chromium.app/Contents/MacOS/Chromium",
+    "revision": "latest"
+  },
+  "mac-arm64": {
+    "executablePath": "chromium/mac-arm64/Chromium.app/Contents/MacOS/Chromium",
+    "revision": "latest"
+  }
+}

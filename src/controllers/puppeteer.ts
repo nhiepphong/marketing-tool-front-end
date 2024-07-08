@@ -1,10 +1,29 @@
-import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
+import puppeteer, { Browser, ElementHandle, Page } from "puppeteer-core";
 import {
   getGenderParsed,
   getRandomInt,
   parseCookieString,
   sleep,
 } from "../utils/utils";
+import path from "path";
+import { app } from "electron";
+import fs from "fs";
+import os from "os";
+
+const chromiumInfo = JSON.parse(
+  fs.readFileSync(path.join(__dirname, "..", "chromium-info.json"), "utf-8")
+);
+
+function getPlatformKey() {
+  const platform = os.platform();
+  const arch = os.arch();
+
+  if (platform === "win32") return "win64";
+  if (platform === "darwin") {
+    return arch === "arm64" ? "mac-arm64" : "mac-x64";
+  }
+  throw new Error("Unsupported platform");
+}
 
 interface RESULT_PAGE {
   browser: Browser;
@@ -807,7 +826,39 @@ async function newPageAndAddCookie(
   url: string,
   cookieString: string
 ): Promise<RESULT_PAGE> {
-  const browser = await puppeteer.launch({ headless: true });
+  const platformKey = getPlatformKey();
+  const chromiumConfig = chromiumInfo[platformKey];
+
+  let executablePath;
+
+  if (app.isPackaged) {
+    // Đường dẫn khi ứng dụng được đóng gói
+    executablePath = path.join(
+      process.resourcesPath,
+      chromiumConfig.executablePath
+    );
+    console.log("executablePath main", executablePath);
+  } else {
+    // Đường dẫn khi đang phát triển
+    executablePath = path.join(
+      __dirname,
+      "..",
+      "..",
+      chromiumConfig.executablePath
+    );
+    console.log("executablePath dev", executablePath);
+  }
+
+  if (!fs.existsSync(executablePath)) {
+    throw new Error(`Chromium executable not found at ${executablePath}`);
+  }
+
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: executablePath,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
   const page: Page = await browser.newPage();
   await page.setViewport({ width: 1080, height: 1024 });
   // Set cookies if provided
