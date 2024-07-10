@@ -12,6 +12,9 @@ export interface ElectronAPI {
   onUpdateDataGetUIDArticle: (
     callback: (event: Electron.IpcRendererEvent, data: any[]) => void
   ) => void;
+  onUpdateStatusToView: (
+    callback: (event: Electron.IpcRendererEvent, data: any) => void
+  ) => void;
   readCookieFile: () => Promise<string>;
   saveCookieFile: (cookie: string) => Promise<void>;
   stopRunTask: () => Promise<void>;

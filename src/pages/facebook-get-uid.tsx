@@ -51,8 +51,19 @@ const FacebookLayUID: React.FC = () => {
       setCookie(savedCookie);
     });
     window.electronAPI.onUpdateDataGetUIDArticle((event, data) => {
-      console.log("onUpdateDataGetUIDArticle", data);
+      //console.log("onUpdateDataGetUIDArticle", data);
       setUserData(data);
+    });
+    window.electronAPI.onUpdateStatusToView((event, data: any) => {
+      console.log("onUpdateStatusToView", data);
+      if (data.status == false) {
+        setIsLoading(false);
+        setAlertMessage(data.message);
+        showToast({
+          type: "error",
+          message: data.message,
+        });
+      }
     });
     // Cleanup listener khi component unmount
     return () => {
@@ -95,9 +106,13 @@ const FacebookLayUID: React.FC = () => {
         url,
         cookie
       );
-      console.log("handleSubmit", result);
+      //console.log("handleSubmit", result);
       if (result !== null) {
-        setUserData([result]);
+        if (result.message != "") {
+          showToast({ type: "error", message: result.message });
+        } else {
+          setUserData([result]);
+        }
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
       }
@@ -117,7 +132,7 @@ const FacebookLayUID: React.FC = () => {
         cookie,
         interactions
       );
-      console.log("getUIDFromLinkArticle", result);
+      //console.log("getUIDFromLinkArticle", result);
       if (result !== null) {
         setUserData(result);
       } else {

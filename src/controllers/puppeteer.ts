@@ -47,7 +47,25 @@ export async function facebookGetUIDFromProfile(
       const browser = tmp.browser;
       const page: Page = tmp.page;
       page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-      let result: any = await page.evaluate(() => {
+
+      let result: any = {
+        id: 0,
+        uid: 0,
+        gender: "",
+        name: "",
+        link: "",
+        phone: "",
+        message: "",
+      };
+      const check_login: boolean = await checkLogin(page);
+
+      if (check_login) {
+        result.message = "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới";
+        await browser.close();
+        return result;
+      }
+
+      result = await page.evaluate(() => {
         const pageContent = document.body.innerHTML;
 
         try {
@@ -86,6 +104,7 @@ export async function facebookGetUIDFromProfile(
                 name: name || "",
                 link: "",
                 phone: "",
+                message: "",
               };
             } else {
               const { id, gender, name } = jsonObject.profile_owner;
@@ -99,6 +118,7 @@ export async function facebookGetUIDFromProfile(
                 name: name || "",
                 link: "",
                 phone: "",
+                message: "",
               };
             }
           }
@@ -171,6 +191,19 @@ export async function facebookGetUIDFromLinkArticleVideo(
 
     let allElements: any[] = [];
 
+    const check_login: boolean = await checkLogin(page);
+
+    if (check_login) {
+      if (mainWindow) {
+        mainWindow.webContents.send("update-alert-to-view", {
+          status: false,
+          message: "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới",
+        });
+      }
+      await browser.close();
+      return allElements;
+    }
+
     // ======= GET LIST REACTION =======
     if (interactions.like == true) {
       // 1. Tìm và click vào span có aria-label="See who reacted to this"
@@ -192,7 +225,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
         cookieString
       );
       console.log(`Total unique elements collected: ${allElements.length}`);
-      console.log(allElements);
+      //console.log(allElements);
       allElements = [...allElements, ..._allElements];
       // Close popup Reaction
       await sleep(2000);
@@ -381,10 +414,10 @@ export async function facebookGetUIDFromLinkArticleVideo(
 
       let i = 1;
       while (true) {
-        console.log(`Scraping comment page ${i}`);
+        //console.log(`Scraping comment page ${i}`);
         const result = await scrapeItems();
-        console.log("Result", result);
-        console.log(`Result comment page ${i}`);
+        //console.log("Result", result);
+        //console.log(`Result comment page ${i}`);
         i++;
         // Thêm các phần tử mới vào mảng tổng
         let items = removeDuplicatesWithLink(
@@ -392,7 +425,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
         );
         for (let item of items) {
           const exists = isItemInArray(item, allElements);
-          console.log(`exists ${item.uid}=${exists}`);
+          //console.log(`exists ${item.uid}=${exists}`);
           if (!exists) {
             const profile_tmp = await facebookGetUIDFromProfile(
               item.link,
@@ -404,7 +437,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
             await sleep(getRandomInt(1, 2) * 1000);
             allElements.push(item);
             // Gửi dữ liệu mới về renderer process
-            console.log("Update 388", option.isStopRequested());
+            //console.log("Update 388", option.isStopRequested());
             if (option.isStopRequested()) {
               break;
             }
@@ -491,6 +524,19 @@ export async function facebookGetUIDFromLinkArticlePost(
 
     let allElements: any[] = [];
 
+    const check_login: boolean = await checkLogin(page);
+
+    if (check_login) {
+      if (mainWindow) {
+        mainWindow.webContents.send("update-alert-to-view", {
+          status: false,
+          message: "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới",
+        });
+      }
+      await browser.close();
+      return allElements;
+    }
+
     // ======= GET LIST REACTION =======
     if (interactions.like == true) {
       // 1. Tìm và click vào span có aria-label="See who reacted to this"
@@ -544,8 +590,8 @@ export async function facebookGetUIDFromLinkArticlePost(
       } catch (error) {
         console.log("getListURLProfileFromPopupUser:", error);
       }
-      console.log(`Total unique elements collected: ${allElements.length}`);
-      console.log(allElements);
+      //console.log(`Total unique elements collected: ${allElements.length}`);
+      //console.log(allElements);
       allElements = [...allElements, ..._allElements];
       // Close popup Reaction
       await sleep(2000);
@@ -646,7 +692,7 @@ export async function facebookGetUIDFromLinkArticlePost(
                   spanText &&
                   (spanText.includes("view all") || spanText.includes("view 1"))
                 ) {
-                  console.log("Clicking button with text:", spanText);
+                  //console.log("Clicking button with text:", spanText);
                   (el as HTMLElement).click();
                   await new Promise((resolve) =>
                     setTimeout(resolve, Math.random() * 1000 + 1000)
@@ -707,7 +753,7 @@ export async function facebookGetUIDFromLinkArticlePost(
 
                 if (links.length > 0) {
                   for (const link of links) {
-                    console.log("link, ", link.url);
+                    //console.log("link, ", link.url);
                     let item = {
                       link: link.url,
                       name: "",
@@ -747,8 +793,8 @@ export async function facebookGetUIDFromLinkArticlePost(
           console.log("result = await scrapeItems();", error);
         }
         if (result) {
-          console.log("Result", result);
-          console.log(`Result comment page ${i}`);
+          //console.log("Result", result);
+          //console.log(`Result comment page ${i}`);
           i++;
           // Thêm các phần tử mới vào mảng tổng
           let items = removeDuplicatesWithLink(
@@ -756,7 +802,7 @@ export async function facebookGetUIDFromLinkArticlePost(
           );
           for (let item of items) {
             const exists = isItemInArray(item, allElements);
-            console.log(`exists ${item.uid}=${exists}`);
+            //console.log(`exists ${item.uid}=${exists}`);
             if (!exists) {
               const profile_tmp = await facebookGetUIDFromProfile(
                 item.link,
@@ -768,7 +814,7 @@ export async function facebookGetUIDFromLinkArticlePost(
               await sleep(getRandomInt(1, 2) * 1000);
               allElements.push(item);
               // Gửi dữ liệu mới về renderer process
-              console.log("Update 748", option.isStopRequested());
+              //console.log("Update 748", option.isStopRequested());
               if (option.isStopRequested()) {
                 break;
               }
@@ -791,7 +837,7 @@ export async function facebookGetUIDFromLinkArticlePost(
           // Đợi để trang load thêm nội dung
           await sleep((getRandomInt(1, 4) + 2) * 1000);
 
-          console.log("Update 771", option.isStopRequested());
+          //console.log("Update 771", option.isStopRequested());
           if (option.isStopRequested()) {
             break;
           }
@@ -818,71 +864,6 @@ export async function facebookGetUIDFromLinkArticlePost(
     return allElements;
   } catch (error) {
     console.error("Error in scrape-facebook:", error);
-    throw error;
-  }
-}
-
-async function newPageAndAddCookie(
-  url: string,
-  cookieString: string
-): Promise<RESULT_PAGE> {
-  const platformKey = getPlatformKey();
-  const chromiumConfig = chromiumInfo[platformKey];
-
-  let executablePath;
-
-  if (app.isPackaged) {
-    // Đường dẫn khi ứng dụng được đóng gói
-    executablePath = path.join(
-      process.resourcesPath,
-      chromiumConfig.executablePath
-    );
-    console.log("executablePath main", executablePath);
-  } else {
-    // Đường dẫn khi đang phát triển
-    executablePath = path.join(
-      __dirname,
-      "..",
-      "..",
-      chromiumConfig.executablePath
-    );
-    console.log("executablePath dev", executablePath);
-  }
-
-  if (!fs.existsSync(executablePath)) {
-    throw new Error(`Chromium executable not found at ${executablePath}`);
-  }
-
-  const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: executablePath,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-
-  const page: Page = await browser.newPage();
-  await page.setViewport({ width: 1080, height: 1024 });
-  // Set cookies if provided
-  try {
-    const cookies = parseCookieString(cookieString);
-    //console.log("Parsed cookies:", cookies); // Log để kiểm tra
-
-    for (const cookie of cookies) {
-      if (cookie.name != "") {
-        try {
-          await page.setCookie(cookie);
-          //console.log(`Successfully set cookie: ${cookie.name}`);
-        } catch (error) {
-          console.error(`Failed to set cookie [${cookie.name}]:`, error);
-        }
-      }
-    }
-
-    await page.goto(url, { waitUntil: "networkidle0" });
-
-    return { browser: browser, page: page };
-  } catch (error) {
-    console.error("Error in scrape-facebook:", error);
-    await browser.close();
     throw error;
   }
 }
@@ -1065,12 +1046,12 @@ function removeDuplicatesWithLink(items: any[]): any[] {
   const uniqueMap = new Map<string, any>();
 
   for (const item of items) {
-    console.log("removeDuplicates", item.link);
+    //console.log("removeDuplicates", item.link);
     if (item.link != null && item.link != "") {
-      console.log("removeDuplicates set 0", item.link);
+      //console.log("removeDuplicates set 0", item.link);
       if (!uniqueMap.has(item.link)) {
         uniqueMap.set(item.link, item);
-        console.log("removeDuplicates set 1", item.link);
+        //console.log("removeDuplicates set 1", item.link);
       }
     }
   }
@@ -1081,17 +1062,17 @@ function removeDuplicatesWithUID(items: any[]): any[] {
   const uniqueMap = new Map<string, any>();
 
   for (const item of items) {
-    console.log("removeDuplicates uid[", item.uid, "]", item.link);
+    //console.log("removeDuplicates uid[", item.uid, "]", item.link);
     if (item.uid != null && item.uid != "") {
-      console.log("removeDuplicates set 0", item.link);
+      //console.log("removeDuplicates set 0", item.link);
       if (!uniqueMap.has(item.uid)) {
         uniqueMap.set(item.uid, item);
-        console.log("removeDuplicates set 1", item.link);
+        //console.log("removeDuplicates set 1", item.link);
       }
     } else {
       if (!uniqueMap.has(item.link)) {
         uniqueMap.set(item.link, item);
-        console.log("removeDuplicates set 2", item.link);
+        //console.log("removeDuplicates set 2", item.link);
       }
     }
   }
@@ -1101,4 +1082,90 @@ function removeDuplicatesWithUID(items: any[]): any[] {
 
 function isItemInArray(item: any, array: any[]): boolean {
   return array.some((arrayItem) => arrayItem.link === item.link);
+}
+
+async function checkLogin(page: Page) {
+  const xpath = '//form[@id="login_popup_cta_form"]';
+  let result: boolean = await page.evaluate((xpath) => {
+    const element = document.evaluate(
+      xpath,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    ).singleNodeValue;
+    if (element) {
+      return true;
+    }
+    return false;
+  }, xpath);
+
+  return result;
+}
+
+async function newPageAndAddCookie(
+  url: string,
+  cookieString: string
+): Promise<RESULT_PAGE> {
+  const platformKey = getPlatformKey();
+  const chromiumConfig = chromiumInfo[platformKey];
+
+  let executablePath;
+
+  if (app.isPackaged) {
+    // Đường dẫn khi ứng dụng được đóng gói
+    executablePath = path.join(
+      process.resourcesPath,
+      chromiumConfig.executablePath
+    );
+    console.log("executablePath main", executablePath);
+  } else {
+    // Đường dẫn khi đang phát triển
+    executablePath = path.join(
+      __dirname,
+      "..",
+      "..",
+      chromiumConfig.executablePath
+    );
+    executablePath =
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+    console.log("executablePath dev", executablePath);
+  }
+
+  if (!fs.existsSync(executablePath)) {
+    throw new Error(`Chromium executable not found at ${executablePath}`);
+  }
+
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath: executablePath,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  const page: Page = await browser.newPage();
+  await page.setViewport({ width: 1080, height: 1024 });
+  // Set cookies if provided
+  try {
+    const cookies = parseCookieString(cookieString);
+    //console.log("Parsed cookies:", cookies); // Log để kiểm tra
+
+    for (const cookie of cookies) {
+      if (cookie.name != "") {
+        try {
+          await page.setCookie(cookie);
+          //console.log(`Successfully set cookie: ${cookie.name}`);
+        } catch (error) {
+          console.error(`Failed to set cookie [${cookie.name}]:`, error);
+        }
+      }
+    }
+
+    await page.goto(url, { waitUntil: "networkidle0" });
+
+    return { browser: browser, page: page };
+  } catch (error) {
+    console.error("Error in scrape-facebook:", error);
+    await browser.close();
+    throw error;
+  }
 }

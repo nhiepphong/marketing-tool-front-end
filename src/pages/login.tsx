@@ -24,7 +24,8 @@ export default function Login() {
 
   useEffect(() => {
     if (dataUser) {
-      navigate("/");
+      console.log("Login redirect");
+      navigate("/app");
     }
   }, [dataUser]);
 

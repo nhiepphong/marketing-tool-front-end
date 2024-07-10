@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { ImageButton, PasswordInput, TextInput } from "../components";
 import { getUserData, updateData } from "../redux/slices/userSlices";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { showToast } from "../utils/showToast";
 import { postRegister } from "../api/user";
@@ -27,11 +27,13 @@ export default function Register() {
 
   useEffect(() => {
     if (dataUser) {
-      navigate("/");
+      console.log("Redirect to Home");
+      navigate("/app");
     }
   }, [dataUser]);
 
-  const createAccount = async () => {
+  const createAccount = async (e: FormEvent) => {
+    e.preventDefault();
     if (formData.password === formData.rePassword) {
       setIsLoading(true);
 
@@ -39,8 +41,10 @@ export default function Register() {
 
       if (result.status == 200) {
         if (result.data.status) {
+          console.log("postRegister", result);
           showToast({ type: "success", message: result.data.message });
-          dispatch(updateData(result.data.data));
+          //dispatch(updateData(result.data.data));
+          navigate("/login");
         } else {
           setIsLoading(false);
           showToast({ type: "error", message: result.data.message });

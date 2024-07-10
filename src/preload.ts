@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ),
   onUpdateDataGetUIDArticle: (callback: any) =>
     ipcRenderer.on("update-data-get-uid-article", callback),
+  onUpdateStatusToView: (callback: any) =>
+    ipcRenderer.on("update-alert-to-view", callback),
   getPhoneNumber: (uid: string) => ipcRenderer.invoke("get-phone-number", uid),
   stopRunTask: () => ipcRenderer.invoke("stop-run-task"),
   readCookieFile: () => ipcRenderer.invoke("read-cookie-file"),
