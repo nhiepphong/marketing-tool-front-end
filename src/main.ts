@@ -43,7 +43,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "..", "build", "index.html"));
-    //mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   }
 
   mainWindow.on("closed", () => {
@@ -141,21 +141,21 @@ ipcMain.handle("stop-run-task", async (event) => {
 });
 
 // IPC handlers
-ipcMain.handle("db-add-data", (event, item) => {
-  return dbOps.addData(item);
+ipcMain.handle("db-add-data", async (event, item) => {
+  return await dbOps.addData(item);
 });
 
-ipcMain.handle("db-find-by-uid", (event, link) => {
-  return dbOps.findByLink(link);
+ipcMain.handle("db-find-by-uid", async (event, link) => {
+  return await dbOps.findByLink(link);
 });
 
-ipcMain.handle("db-get-data-by-page", (event, page, itemsPerPage) => {
-  return dbOps.getDataByPage(page, itemsPerPage);
+ipcMain.handle("db-get-data-by-page", async (event, page, itemsPerPage) => {
+  return await dbOps.getDataByPage(page, itemsPerPage);
 });
 
-ipcMain.handle("db-get-total-count", () => {
-  return dbOps.getTotalCount();
+ipcMain.handle("db-get-total-count", async () => {
+  return await dbOps.getTotalCount();
 });
-ipcMain.handle("clear-all-data", () => {
-  return dbOps.clearAllData();
+ipcMain.handle("clear-all-data", async () => {
+  return await dbOps.clearAllData();
 });

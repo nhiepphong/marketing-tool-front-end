@@ -1,17 +1,22 @@
-import Database from "better-sqlite3";
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
 import path from "path";
 import { app } from "electron";
 
-let db: Database.Database;
+let db: any;
 
-export function initializeDatabase() {
+export async function initializeDatabase() {
   const dbPath = app.isPackaged
     ? path.join(process.resourcesPath, "scrapeData.db")
     : path.join(app.getPath("userData"), "scrapeData.db");
 
-  db = new Database(dbPath);
+  db = await open({
+    filename: dbPath,
+    driver: sqlite3.Database,
+  });
+  console.log("initializeDatabase", dbPath);
 
-  db.exec(`
+  await db.run(`
     CREATE TABLE IF NOT EXISTS scraped_data (
       id INTEGER PRIMARY KEY,
       name TEXT,

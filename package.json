@@ -16,7 +16,6 @@
     "@types/victor": "^1.1.5",
     "animejs": "^3.2.2",
     "axios": "^1.6.7",
-    "better-sqlite3": "^11.1.2",
     "classnames": "^2.5.1",
     "crypto-js": "^4.2.0",
     "electron-log": "^5.1.5",
@@ -29,6 +28,8 @@
     "react-toastify": "^10.0.5",
     "redux-persist": "^6.0.0",
     "redux-thunk": "^3.1.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.6",
     "styled-components": "^6.1.8",
     "tailwindcss-safe-area": "^0.5.1",
     "ts-loader": "^9.5.1",
@@ -74,7 +75,6 @@
     ]
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
     "@types/crypto-js": "^4.2.2",
     "@types/puppeteer": "^7.0.4",
     "@types/react": "^18.3.3",
@@ -85,6 +85,7 @@
     "electron": "^31.0.2",
     "electron-builder": "^24.13.3",
     "electron-is-dev": "^3.0.1",
+    "electron-rebuild": "^3.2.9",
     "postcss": "^8.4.35",
     "react-router-dom": "^6.22.1",
     "sass": "^1.71.1",

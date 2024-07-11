@@ -11,66 +11,51 @@ export interface ScrapedItem {
   message: string;
 }
 
-export function addData(item: ScrapedItem): number {
+export async function addData(item: ScrapedItem): Promise<number> {
   const db = getDatabase();
-  const stmt = db.prepare(`
+  const result = await db.run(
+    `
     INSERT OR REPLACE INTO scraped_data 
     (id, name, uid, gender, link, phone, type, message) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  const info = stmt.run(
-    item.id,
-    item.name,
-    item.uid,
-    item.gender,
-    item.link,
-    item.phone,
-    item.type,
-    item.message
+  `,
+    [
+      item.id,
+      item.name,
+      item.uid,
+      item.gender,
+      item.link,
+      item.phone,
+      item.type,
+      item.message,
+    ]
   );
-  return info.changes;
+  return result.changes;
 }
 
-export function findByLink(link: string): ScrapedItem | null {
+export async function findByLink(link: string): Promise<ScrapedItem | null> {
   const db = getDatabase();
-  const stmt = db.prepare("SELECT * FROM scraped_data WHERE link = ?");
-  return stmt.get(link) as ScrapedItem | null;
+  return await db.get("SELECT * FROM scraped_data WHERE link = ?", [link]);
 }
 
-export function getDataByPage(
+export async function getDataByPage(
   page: number,
   itemsPerPage: number
-): ScrapedItem[] {
+): Promise<ScrapedItem[]> {
   const db = getDatabase();
-  const stmt = db.prepare("SELECT * FROM scraped_data LIMIT ? OFFSET ?");
-  return stmt.all(itemsPerPage, (page - 1) * itemsPerPage) as ScrapedItem[];
+  return await db.all("SELECT * FROM scraped_data LIMIT ? OFFSET ?", [
+    itemsPerPage,
+    (page - 1) * itemsPerPage,
+  ]);
 }
 
-export function getTotalCount(): number {
+export async function getTotalCount(): Promise<number> {
   const db = getDatabase();
-  const stmt = db.prepare("SELECT COUNT(*) as count FROM scraped_data");
-  const result = stmt.get() as { count: number };
+  const result = await db.get("SELECT COUNT(*) as count FROM scraped_data");
+  console.log("getTotalCount", result, result.count);
   return result.count;
 }
 export function clearAllData(): void {
   const db = getDatabase();
-  const stmt = db.prepare("DELETE FROM scraped_data");
-  stmt.run();
-}
-export function searchByName(name: string): ScrapedItem[] {
-  const db = getDatabase();
-  const stmt = db.prepare("SELECT * FROM scraped_data WHERE name LIKE ?");
-  return stmt.all(`%${name}%`) as ScrapedItem[];
-}
-
-export function filterByGender(gender: string): ScrapedItem[] {
-  const db = getDatabase();
-  const stmt = db.prepare("SELECT * FROM scraped_data WHERE gender = ?");
-  return stmt.all(gender) as ScrapedItem[];
-}
-
-export function getDataByType(type: string): ScrapedItem[] {
-  const db = getDatabase();
-  const stmt = db.prepare("SELECT * FROM scraped_data WHERE type = ?");
-  return stmt.all(type) as ScrapedItem[];
+  db.run("DELETE FROM scraped_data");
 }

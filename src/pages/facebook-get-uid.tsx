@@ -4,7 +4,6 @@ import { useSelector } from "react-redux";
 import { getUserData } from "../redux/slices/userSlices";
 import { showToast } from "../utils/showToast";
 import DataContext from "../context/DataContext";
-import { set } from "animejs";
 import Pagination from "../components/Pagination";
 import { ScrapedItem } from "../utils/interface.global";
 
@@ -45,7 +44,7 @@ const FacebookLayUID: React.FC = () => {
     window.electronAPI.onUpdateDataGetUIDArticle((event, data) => {
       console.log("onUpdateDataGetUIDArticle", data);
       //setUserData(data);
-      loadDataList(1);
+      loadDataList(currentPage);
     });
     window.electronAPI.onUpdateStatusToView((event, data: any) => {
       console.log("onUpdateStatusToView", data);
