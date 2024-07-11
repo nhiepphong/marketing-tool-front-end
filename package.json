@@ -46,9 +46,12 @@
     "electron:prod": "npm run build && cross-env NODE_ENV=production npm run build-electron && electron .",
     "electron:build": "npm run build && npm run build-electron && electron-builder build --mac --win",
     "postinstall": "electron-builder install-app-deps",
-    "electron:package:mac:arm64": "npm run build && npm run build-electron && electron-builder build --mac --arm64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/mac-arm64",
-    "electron:package:mac:x64": "npm run build && npm run build-electron && electron-builder build --mac --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/mac-x64",
-    "electron:package:win:x64": "npm run build && npm run build-electron && electron-builder build --win --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/win-x64",
+    "prepare-chromium:win": "node scripts/prepare-chromium.js win32 x64",
+    "prepare-chromium:mac-x64": "node scripts/prepare-chromium.js darwin x64",
+    "prepare-chromium:mac-arm64": "node scripts/prepare-chromium.js darwin arm64",
+    "electron:package:mac:arm64": "npm run prepare-chromium:mac-arm64 && npm run build && npm run build-electron && electron-builder build --mac --arm64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/mac-arm64",
+    "electron:package:mac:x64": "npm run prepare-chromium:mac-x64 && npm run build && npm run build-electron && electron-builder build --mac --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/mac-x64",
+    "electron:package:win:x64": "npm run prepare-chromium:win && npm run build && npm run build-electron && electron-builder build --win --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/win-x64",
     "electron:package:linux:x64": "npm run build && npm run build-electron && electron-builder build --linux --x64 -c.extraMetadata.main=./dist/main.js -c.directories.output=./dist_electron/linux-x64",
     "electron:package:all": "npm run electron:package:mac:arm64 && npm run electron:package:mac:x64 && npm run electron:package:win:x64 && npm run electron:package:linux:x64"
   },
@@ -103,7 +106,7 @@
     ],
     "extraResources": [
       {
-        "from": "chromium",
+        "from": "build-chromium",
         "to": "chromium",
         "filter": [
           "**/*"

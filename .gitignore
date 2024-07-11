@@ -26,3 +26,4 @@ release
 node.txt
 dist_electron
 chromium
+build-chromium
