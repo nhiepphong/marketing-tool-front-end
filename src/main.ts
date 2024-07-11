@@ -6,9 +6,10 @@ import {
 } from "./controllers/puppeteer";
 import fs from "fs";
 import { promisify } from "util";
-import * as url from "url";
 import log from "electron-log";
-import { readFile } from "fs/promises";
+import { initializeDatabase } from "./shared/database";
+import * as dbOps from "./shared/dbOperations";
+
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
 
@@ -35,6 +36,8 @@ function createWindow() {
     },
   });
 
+  mainWindow.setMenu(null);
+
   if (isDev) {
     mainWindow.loadURL("http://localhost:3000");
     mainWindow.webContents.openDevTools();
@@ -46,10 +49,16 @@ function createWindow() {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+
+  setInterval(() => {
+    const memoryUsage = process.memoryUsage();
+    log.info("Memory usage:", memoryUsage);
+  }, 60000); // Ghi log mỗi phút
 }
 
 app.whenReady().then(() => {
   createWindow();
+  initializeDatabase();
 });
 
 app.on("window-all-closed", () => {
@@ -129,4 +138,24 @@ ipcMain.handle("stop-run-task", async (event) => {
   console.log("isScrapingStopped 1:", isScrapingStopped);
   isScrapingStopped = true;
   console.log("isScrapingStopped 2:", isScrapingStopped);
+});
+
+// IPC handlers
+ipcMain.handle("db-add-data", (event, item) => {
+  return dbOps.addData(item);
+});
+
+ipcMain.handle("db-find-by-uid", (event, link) => {
+  return dbOps.findByLink(link);
+});
+
+ipcMain.handle("db-get-data-by-page", (event, page, itemsPerPage) => {
+  return dbOps.getDataByPage(page, itemsPerPage);
+});
+
+ipcMain.handle("db-get-total-count", () => {
+  return dbOps.getTotalCount();
+});
+ipcMain.handle("clear-all-data", () => {
+  return dbOps.clearAllData();
 });

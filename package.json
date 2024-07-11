@@ -16,6 +16,7 @@
     "@types/victor": "^1.1.5",
     "animejs": "^3.2.2",
     "axios": "^1.6.7",
+    "better-sqlite3": "^11.1.2",
     "classnames": "^2.5.1",
     "crypto-js": "^4.2.0",
     "electron-log": "^5.1.5",
@@ -41,7 +42,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "build-electron": "tsc -p tsconfig.electron.json && node scripts/copy-chromium-info.js",
-    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development npm run build-electron && electron .\"",
+    "electron:dev": "npm run build && concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development npm run build-electron && electron .\"",
     "electron:prod": "npm run build && cross-env NODE_ENV=production npm run build-electron && electron .",
     "electron:build": "npm run build && npm run build-electron && electron-builder build --mac --win",
     "postinstall": "electron-builder install-app-deps",
@@ -70,6 +71,7 @@
     ]
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
     "@types/crypto-js": "^4.2.2",
     "@types/puppeteer": "^7.0.4",
     "@types/react": "^18.3.3",

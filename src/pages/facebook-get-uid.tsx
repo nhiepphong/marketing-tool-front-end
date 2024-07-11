@@ -6,16 +6,7 @@ import { showToast } from "../utils/showToast";
 import DataContext from "../context/DataContext";
 import { set } from "animejs";
 import Pagination from "../components/Pagination";
-
-interface UserData {
-  id: number;
-  name: string;
-  uid: string;
-  gender: string;
-  link: string;
-  phone: string | null;
-  type: string | "";
-}
+import { ScrapedItem } from "../utils/interface.global";
 
 const FacebookLayUID: React.FC = () => {
   const [url, setUrl] = useState(
@@ -31,7 +22,7 @@ const FacebookLayUID: React.FC = () => {
   const [currentItemGetPhone, setCurrentItemGetPhone] = useState(-1);
 
   const dataUser = useSelector(getUserData);
-  const [userData, setUserData] = useState<UserData[]>([]);
+  const [userData, setUserData] = useState<ScrapedItem[]>([]);
   const [searchType, setSearchType] = useState("personal");
   const [interactions, setInteractions] = useState({
     like: false,
@@ -40,9 +31,10 @@ const FacebookLayUID: React.FC = () => {
   });
   const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const [indexOfLastItem, setIndexOfLastItem] = useState(0);
   const [indexOfFirstItem, setIndexOfFirstItem] = useState(0);
-  const [currentItems, setCurrentItems] = useState<UserData[]>([]);
+  const [totalRecord, settotalRecord] = useState(0);
+
+  const [currentItems, setCurrentItems] = useState<ScrapedItem[]>([]);
 
   useEffect(() => {
     // Đăng ký listener cho updates
@@ -51,8 +43,9 @@ const FacebookLayUID: React.FC = () => {
       setCookie(savedCookie);
     });
     window.electronAPI.onUpdateDataGetUIDArticle((event, data) => {
-      //console.log("onUpdateDataGetUIDArticle", data);
-      setUserData(data);
+      console.log("onUpdateDataGetUIDArticle", data);
+      //setUserData(data);
+      loadDataList(1);
     });
     window.electronAPI.onUpdateStatusToView((event, data: any) => {
       console.log("onUpdateStatusToView", data);
@@ -64,6 +57,7 @@ const FacebookLayUID: React.FC = () => {
           message: data.message,
         });
       }
+      loadDataList(1);
     });
     // Cleanup listener khi component unmount
     return () => {
@@ -89,7 +83,8 @@ const FacebookLayUID: React.FC = () => {
         message: "Vui lòng nhập link facebook để lấy UID",
       });
     }
-    setUserData([]);
+    await window.electronAPI.clearDataFromDB();
+    loadDataList(1);
     setIsLoading(true);
     setAlertMessage("Đang lấy UID, vui lòng chờ...");
 
@@ -111,7 +106,8 @@ const FacebookLayUID: React.FC = () => {
         if (result.message != "") {
           showToast({ type: "error", message: result.message });
         } else {
-          setUserData([result]);
+          await window.electronAPI.addDataFromDB(result);
+          loadDataList(1);
         }
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
@@ -134,7 +130,7 @@ const FacebookLayUID: React.FC = () => {
       );
       //console.log("getUIDFromLinkArticle", result);
       if (result !== null) {
-        setUserData(result);
+        //setUserData(result);
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
       }
@@ -148,31 +144,26 @@ const FacebookLayUID: React.FC = () => {
   };
 
   useEffect(() => {
-    if (userData.length > 0) {
-      const _currentPage = 1;
-      const _indexOfLastItem = _currentPage * itemsPerPage;
-      const _indexOfFirstItem = _indexOfLastItem - itemsPerPage;
-      const _currentItems = userData.slice(_indexOfFirstItem, _indexOfLastItem);
-
-      setCurrentPage(_currentPage);
-      setIndexOfLastItem(_indexOfLastItem);
-      setIndexOfFirstItem(_indexOfFirstItem);
-      setCurrentItems(_currentItems);
-    }
+    loadDataList(1);
   }, [userData]);
 
   useEffect(() => {
-    if (userData.length > 0) {
-      const _currentPage = currentPage;
-      const _indexOfLastItem = _currentPage * itemsPerPage;
-      const _indexOfFirstItem = _indexOfLastItem - itemsPerPage;
-      const _currentItems = userData.slice(_indexOfFirstItem, _indexOfLastItem);
-
-      setIndexOfLastItem(_indexOfLastItem);
-      setIndexOfFirstItem(_indexOfFirstItem);
-      setCurrentItems(_currentItems);
-    }
+    loadDataList(currentPage);
   }, [currentPage]);
+
+  const loadDataList = async (_currentPage: number) => {
+    const _totalRecord = await window.electronAPI.getTotalCountItem();
+    settotalRecord(_totalRecord);
+    const _currentItems: ScrapedItem[] =
+      await window.electronAPI.getDataForPagination(_currentPage, itemsPerPage);
+
+    const _indexOfFirstItem = _currentPage * itemsPerPage - itemsPerPage;
+    setCurrentPage(_currentPage);
+    setIndexOfFirstItem(_indexOfFirstItem);
+    setCurrentItems(_currentItems);
+    console.log("loadDataList totalRecord", _totalRecord);
+    console.log("loadDataList _currentItems", _currentItems);
+  };
 
   useEffect(() => {
     if (isAutoGetPhone) {
@@ -188,7 +179,7 @@ const FacebookLayUID: React.FC = () => {
     return userData.findIndex((item) => item.uid === uid);
   };
 
-  const handleGetPhone = async (item: UserData) => {
+  const handleGetPhone = async (item: ScrapedItem) => {
     const index = getIndexInUserData(item.uid);
     setCurrentItemGetPhone(index);
     await getPhoneFromUID(item);
@@ -200,7 +191,7 @@ const FacebookLayUID: React.FC = () => {
     }
   };
 
-  const getPhoneFromUID = async (item: UserData) => {
+  const getPhoneFromUID = async (item: ScrapedItem) => {
     const result: any = await getPhoneFromUIDByAPI(
       item,
       dataUser.token.accessToken
@@ -351,11 +342,11 @@ const FacebookLayUID: React.FC = () => {
         <></>
       )}
 
-      {userData.length > 0 && (
+      {currentItems.length > 0 && (
         <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
-              Kết quả ({userData.length})
+              Kết quả ({totalRecord})
             </h2>
             {isLoading ? (
               <></>
@@ -421,7 +412,7 @@ const FacebookLayUID: React.FC = () => {
           </div>
           <Pagination
             currentPage={currentPage}
-            totalPages={Math.ceil(userData.length / itemsPerPage)}
+            totalPages={Math.ceil(totalRecord / itemsPerPage)}
             onPageChange={paginate}
           />
         </>

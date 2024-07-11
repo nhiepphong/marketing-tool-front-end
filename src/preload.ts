@@ -23,6 +23,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   readCookieFile: () => ipcRenderer.invoke("read-cookie-file"),
   saveCookieFile: (cookie: string) =>
     ipcRenderer.invoke("save-cookie-file", cookie),
+  clearDataFromDB: () => ipcRenderer.invoke("clear-all-data"),
+  addDataFromDB: (item: any) => ipcRenderer.invoke("db-add-data", item),
+  getTotalCountItem: () => ipcRenderer.invoke("db-get-total-count"),
+  getDataForPagination: (currentPage: number, itemsPerPage: number) =>
+    ipcRenderer.invoke("db-get-data-by-page", currentPage, itemsPerPage),
 });
 
 console.log("preload");

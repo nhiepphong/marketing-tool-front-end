@@ -9,6 +9,8 @@ import path from "path";
 import { app } from "electron";
 import fs from "fs";
 import os from "os";
+import * as dbOps from "../shared/dbOperations";
+import { ScrapedItem } from "../utils/interface.global";
 
 const chromiumInfo = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "chromium-info.json"), "utf-8")
@@ -32,6 +34,7 @@ interface RESULT_PAGE {
 interface ScrapingOptions {
   isStopRequested: () => boolean;
 }
+
 export async function facebookGetUIDFromProfile(
   url: string,
   cookieString: string
@@ -61,6 +64,10 @@ export async function facebookGetUIDFromProfile(
 
       if (check_login) {
         result.message = "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới";
+        try {
+          await browser.disconnect();
+        } catch (error) {}
+
         await browser.close();
         return result;
       }
@@ -131,15 +138,18 @@ export async function facebookGetUIDFromProfile(
         result.link = url;
         result.gender = getGenderParsed(result.gender);
       }
-
+      try {
+        await browser.disconnect();
+      } catch (error) {}
       await browser.close();
+
       return result;
     } else {
       return null;
     }
   } catch (error) {
     console.error("Error in scrape-facebook:", error);
-    throw error;
+    return null;
   }
 }
 
@@ -189,8 +199,6 @@ export async function facebookGetUIDFromLinkArticleVideo(
       }
     );
 
-    let allElements: any[] = [];
-
     const check_login: boolean = await checkLogin(page);
 
     if (check_login) {
@@ -200,8 +208,11 @@ export async function facebookGetUIDFromLinkArticleVideo(
           message: "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới",
         });
       }
+      try {
+        await browser.disconnect();
+      } catch (error) {}
       await browser.close();
-      return allElements;
+      return { status: false };
     }
 
     // ======= GET LIST REACTION =======
@@ -218,15 +229,17 @@ export async function facebookGetUIDFromLinkArticleVideo(
       await sleep(3000);
 
       // 3. Lấy tất cả các phần tử của popup user
-      let _allElements: any[] = await getListURLProfileFromPopupUser(
-        option,
-        page,
-        mainWindow,
-        cookieString
-      );
-      console.log(`Total unique elements collected: ${allElements.length}`);
-      //console.log(allElements);
-      allElements = [...allElements, ..._allElements];
+      try {
+        await getListURLProfileFromPopupUser(
+          option,
+          page,
+          mainWindow,
+          cookieString
+        );
+      } catch (error) {
+        console.log("getListURLProfileFromPopupUser:", error);
+      }
+
       // Close popup Reaction
       await sleep(2000);
       await page.click('xpath=//div[@aria-label="Close" and @role="button"]');
@@ -288,29 +301,42 @@ export async function facebookGetUIDFromLinkArticleVideo(
           };
 
           function cleanFacebookUrl(url: string): { url: string; uid: string } {
-            let result = { url: url, uid: "" };
+            let result = { url: "", uid: "" };
             try {
               const parsedUrl = new URL(url);
+
+              // Trường hợp 1: URL có tham số 'id'
               const searchParams = new URLSearchParams(parsedUrl.search);
-
-              // Lấy giá trị của tham số 'id' (nếu có)
               const id = searchParams.get("id");
-
-              // Xóa tất cả các tham số
-              parsedUrl.search = "";
-
-              // Nếu có 'id', thêm lại vào URL
               if (id) {
+                parsedUrl.search = "";
                 parsedUrl.searchParams.set("id", id);
+                result.url = parsedUrl.toString();
                 result.uid = id;
+                return result;
               }
 
-              // Cập nhật URL đã được làm sạch
-              result.url = parsedUrl.toString();
+              // Trường hợp 2: URL có cấu trúc https://www.facebook.com/username
+              if (
+                parsedUrl.hostname.indexOf("facebook.com") > -1 &&
+                parsedUrl.pathname.split("/").length === 2
+              ) {
+                const username = parsedUrl.pathname.split("/")[1];
+                if (username && username !== "") {
+                  if (username != "photo.php") {
+                    result.url = `https://facebook.com/${username}`;
+                    result.uid = "";
+                    return result;
+                  }
+                }
+              }
+
+              // Nếu không thuộc hai trường hợp trên, trả về kết quả rỗng
+              return result;
             } catch (error) {
               console.error("Error cleaning URL:", error);
+              return result;
             }
-            return result;
           }
 
           const clickButtons = async (element: Element): Promise<boolean> => {
@@ -409,7 +435,6 @@ export async function facebookGetUIDFromLinkArticleVideo(
         });
       };
 
-      let allElements: any[] = [];
       let previousLength = 0;
 
       let i = 1;
@@ -424,8 +449,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
           result.items.slice(previousLength)
         );
         for (let item of items) {
-          const exists = isItemInArray(item, allElements);
-          //console.log(`exists ${item.uid}=${exists}`);
+          const exists = await isItemInArray(item);
           if (!exists) {
             const profile_tmp = await facebookGetUIDFromProfile(
               item.link,
@@ -434,18 +458,16 @@ export async function facebookGetUIDFromLinkArticleVideo(
             if (profile_tmp != null) {
               item = profile_tmp;
             }
+            await dbOps.addData(item);
             await sleep(getRandomInt(1, 2) * 1000);
-            allElements.push(item);
-            // Gửi dữ liệu mới về renderer process
-            //console.log("Update 388", option.isStopRequested());
+
             if (option.isStopRequested()) {
               break;
             }
             if (mainWindow) {
-              mainWindow.webContents.send(
-                "update-data-get-uid-article",
-                allElements
-              );
+              mainWindow.webContents.send("update-data-get-uid-article", [
+                item,
+              ]);
             }
           }
         }
@@ -476,10 +498,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
           break;
         }
         if (mainWindow) {
-          mainWindow.webContents.send(
-            "update-data-get-uid-article",
-            allElements
-          );
+          mainWindow.webContents.send("update-data-get-uid-article", []);
         }
         if (result.hasMore == false) {
           break;
@@ -491,9 +510,11 @@ export async function facebookGetUIDFromLinkArticleVideo(
         await sleep((getRandomInt(1, 4) + 2) * 1000);
       }
     }
-
+    try {
+      await browser.disconnect();
+    } catch (error) {}
     await browser.close();
-    return allElements;
+    return { status: true };
   } catch (error) {
     console.error("Error in scrape-facebook:", error);
     throw error;
@@ -522,8 +543,6 @@ export async function facebookGetUIDFromLinkArticlePost(
       }
     );
 
-    let allElements: any[] = [];
-
     const check_login: boolean = await checkLogin(page);
 
     if (check_login) {
@@ -533,8 +552,11 @@ export async function facebookGetUIDFromLinkArticlePost(
           message: "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới",
         });
       }
+      try {
+        await browser.disconnect();
+      } catch (error) {}
       await browser.close();
-      return allElements;
+      return { status: false };
     }
 
     // ======= GET LIST REACTION =======
@@ -579,9 +601,8 @@ export async function facebookGetUIDFromLinkArticlePost(
       await sleep(3000);
 
       // 3. Lấy tất cả các phần tử của popup user
-      let _allElements: any[] = [];
       try {
-        _allElements = await getListURLProfileFromPopupUser(
+        await getListURLProfileFromPopupUser(
           option,
           page,
           mainWindow,
@@ -590,9 +611,7 @@ export async function facebookGetUIDFromLinkArticlePost(
       } catch (error) {
         console.log("getListURLProfileFromPopupUser:", error);
       }
-      //console.log(`Total unique elements collected: ${allElements.length}`);
-      //console.log(allElements);
-      allElements = [...allElements, ..._allElements];
+
       // Close popup Reaction
       await sleep(2000);
       await page.click('xpath=//div[@aria-label="Close" and @role="button"]');
@@ -618,7 +637,6 @@ export async function facebookGetUIDFromLinkArticlePost(
         }
       });
 
-      let dataLinks: any[] = [];
       const scrapeItems = async () => {
         return await page.evaluate(async () => {
           const xpath =
@@ -780,7 +798,6 @@ export async function facebookGetUIDFromLinkArticlePost(
         });
       };
 
-      let allElements: any[] = [];
       let previousLength = 0;
 
       let i = 1;
@@ -801,7 +818,7 @@ export async function facebookGetUIDFromLinkArticlePost(
             result.items.slice(previousLength)
           );
           for (let item of items) {
-            const exists = isItemInArray(item, allElements);
+            const exists = await isItemInArray(item);
             //console.log(`exists ${item.uid}=${exists}`);
             if (!exists) {
               const profile_tmp = await facebookGetUIDFromProfile(
@@ -811,18 +828,16 @@ export async function facebookGetUIDFromLinkArticlePost(
               if (profile_tmp != null) {
                 item = profile_tmp;
               }
+              await dbOps.addData(item);
               await sleep(getRandomInt(1, 2) * 1000);
-              allElements.push(item);
-              // Gửi dữ liệu mới về renderer process
-              //console.log("Update 748", option.isStopRequested());
+
               if (option.isStopRequested()) {
                 break;
               }
               if (mainWindow) {
-                mainWindow.webContents.send(
-                  "update-data-get-uid-article",
-                  allElements
-                );
+                mainWindow.webContents.send("update-data-get-uid-article", [
+                  item,
+                ]);
               }
             }
           }
@@ -843,10 +858,7 @@ export async function facebookGetUIDFromLinkArticlePost(
           }
           // Gửi dữ liệu mới về renderer process
           if (mainWindow) {
-            mainWindow.webContents.send(
-              "update-data-get-uid-article",
-              allElements
-            );
+            mainWindow.webContents.send("update-data-get-uid-article", []);
           }
           if (result.hasMore == false) {
             break;
@@ -860,8 +872,11 @@ export async function facebookGetUIDFromLinkArticlePost(
       }
     }
 
-    //await browser.close();
-    return allElements;
+    try {
+      await browser.disconnect();
+    } catch (error) {}
+    await browser.close();
+    return { status: true };
   } catch (error) {
     console.error("Error in scrape-facebook:", error);
     throw error;
@@ -873,11 +888,10 @@ async function getListURLProfileFromPopupUser(
   page: Page,
   mainWindow: any,
   cookieString: string
-): Promise<any[]> {
+): Promise<any> {
   const xpath =
     '//div[contains(@class, "html-div")]/div[1]/div[1]/div[@data-visualcompletion="ignore-dynamic" and contains(@style, "padding-left")]';
 
-  let allElements: any[] = [];
   let previousLength = 0;
   let noNewElementsCount = 0;
   const maxNoNewElementsAttempts = 3;
@@ -887,19 +901,43 @@ async function getListURLProfileFromPopupUser(
     const newElements = await page.$$eval(
       "body",
       async (elements, xpathToEvaluate, cookieString) => {
-        function cleanFacebookUrl(url: string): any {
-          let result = { url: url, uid: "" };
+        function cleanFacebookUrl(url: string): { url: string; uid: string } {
+          let result = { url: "", uid: "" };
           try {
             const parsedUrl = new URL(url);
+
+            // Trường hợp 1: URL có tham số 'id'
             const searchParams = new URLSearchParams(parsedUrl.search);
-            searchParams.delete("__tn__");
-            parsedUrl.search = searchParams.toString();
-            result.url = parsedUrl.toString();
-            result.uid = searchParams.get("id") || "";
+            const id = searchParams.get("id");
+            if (id) {
+              parsedUrl.search = "";
+              parsedUrl.searchParams.set("id", id);
+              result.url = parsedUrl.toString();
+              result.uid = id;
+              return result;
+            }
+
+            // Trường hợp 2: URL có cấu trúc https://www.facebook.com/username
+            if (
+              parsedUrl.hostname.indexOf("facebook.com") > -1 &&
+              parsedUrl.pathname.split("/").length === 2
+            ) {
+              const username = parsedUrl.pathname.split("/")[1];
+              if (username && username !== "") {
+                if (username != "photo.php") {
+                  result.url = `https://facebook.com/${username}`;
+                  result.uid = "";
+                  return result;
+                }
+              }
+            }
+
+            // Nếu không thuộc hai trường hợp trên, trả về kết quả rỗng
+            return result;
           } catch (error) {
             console.error("Error cleaning URL:", error);
+            return result;
           }
-          return result;
         }
 
         const xpathResult = document.evaluate(
@@ -929,10 +967,11 @@ async function getListURLProfileFromPopupUser(
             link: "",
             name: "",
             uid: "",
-            id: "",
+            id: 0,
             gender: "",
             phone: "",
             type: "like",
+            message: "",
           };
           if (linkElement) {
             const tmp = cleanFacebookUrl(linkElement.href || "");
@@ -940,10 +979,11 @@ async function getListURLProfileFromPopupUser(
               link: tmp.url,
               name: linkElement.textContent?.trim() || "",
               uid: tmp.uid,
-              id: tmp.uid,
+              id: parseInt(tmp.uid),
               gender: "",
               phone: "",
               type: "like",
+              message: "",
             };
           }
 
@@ -954,15 +994,10 @@ async function getListURLProfileFromPopupUser(
       xpath,
       cookieString
     );
-    // console.log(
-    //   `allElements: ${allElements.length} - newElements: ${newElements.length}, previousLength: ${previousLength}`
-    // );
-    // Thêm các phần tử mới vào mảng tổng
-    allElements = [...allElements, ...newElements.slice(previousLength)];
 
-    let tmp_arr = [];
-    for (let item of allElements) {
-      if (item.uid === "" || item.name === "" || item.gender === "") {
+    for (let item of newElements) {
+      const itemCheck = await dbOps.findByLink(item.link);
+      if (itemCheck == null) {
         const profile_tmp = await facebookGetUIDFromProfile(
           item.link,
           cookieString
@@ -972,24 +1007,15 @@ async function getListURLProfileFromPopupUser(
         }
         await sleep(2000);
       }
-      tmp_arr.push(item);
-      console.log("Update 940", option.isStopRequested());
       if (option.isStopRequested()) {
         break;
       }
+      await dbOps.addData(item);
+      console.log("getListURLProfileFromPopupUser", item.link);
       if (mainWindow) {
-        mainWindow.webContents.send("update-data-get-uid-article", tmp_arr);
+        mainWindow.webContents.send("update-data-get-uid-article", [item]);
       }
     }
-    //console.log(`Total unique elements collected: ${allElements.length}`);
-    //console.log(`tmp_arr: ${tmp_arr.length}`);
-    allElements = [...tmp_arr];
-    //console.log(`allElements: ${allElements.length}`);
-    console.log(
-      `Found ${newElements.length} elements in total. New elements: ${
-        newElements.length - previousLength
-      }`
-    );
 
     if (newElements.length === previousLength) {
       noNewElementsCount++;
@@ -1005,13 +1031,8 @@ async function getListURLProfileFromPopupUser(
 
     previousLength = newElements.length;
 
-    console.log("Update 972", option.isStopRequested());
     if (option.isStopRequested()) {
       break;
-    }
-    // Gửi dữ liệu mới về renderer process
-    if (mainWindow) {
-      mainWindow.webContents.send("update-data-get-uid-article", allElements);
     }
 
     // Scroll đến phần tử cuối cùng
@@ -1033,13 +1054,9 @@ async function getListURLProfileFromPopupUser(
 
     // Đợi để trang load thêm nội dung
     await sleep((getRandomInt(1, 4) + 3) * 1000);
-
-    // if (allElements.length > 100) {
-    //   break;
-    // }
   }
 
-  return allElements;
+  return { status: true };
 }
 
 function removeDuplicatesWithLink(items: any[]): any[] {
@@ -1080,8 +1097,9 @@ function removeDuplicatesWithUID(items: any[]): any[] {
   return Array.from(uniqueMap.values());
 }
 
-function isItemInArray(item: any, array: any[]): boolean {
-  return array.some((arrayItem) => arrayItem.link === item.link);
+async function isItemInArray(item: any): Promise<boolean> {
+  const tmp = await dbOps.findByLink(item.link);
+  return tmp ? true : false;
 }
 
 async function checkLogin(page: Page) {
@@ -1139,7 +1157,11 @@ async function newPageAndAddCookie(
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: executablePath,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+    ],
   });
 
   const page: Page = await browser.newPage();
@@ -1165,6 +1187,9 @@ async function newPageAndAddCookie(
     return { browser: browser, page: page };
   } catch (error) {
     console.error("Error in scrape-facebook:", error);
+    try {
+      await browser.disconnect();
+    } catch (error) {}
     await browser.close();
     throw error;
   }

@@ -21,3 +21,14 @@ export type DataUser = {
     refreshToken: string;
   };
 };
+
+export interface ScrapedItem {
+  id: number;
+  name: string;
+  uid: string;
+  gender: string;
+  link: string;
+  phone: string | null;
+  type: string | "";
+  message: string;
+}

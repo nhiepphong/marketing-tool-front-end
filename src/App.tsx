@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import "./App.css";
 import DataContext from "./context/DataContext";
 import {
@@ -97,6 +97,8 @@ function App() {
   const dataUser = useSelector(getUserData);
   const [isNeedGetNewToken, setIsNeedGetNewToken] = useState(false);
   const dispatch = useDispatch();
+  const dataUserRef = useRef(dataUser);
+
   useEffect(() => {
     if (isNeedGetNewToken && dataUser) {
       getNewToken();
@@ -104,38 +106,44 @@ function App() {
   }, [isNeedGetNewToken]);
 
   useEffect(() => {
+    dataUserRef.current = dataUser;
+  }, [dataUser]);
+
+  useEffect(() => {
     if (dataUser) {
       getNewToken();
     }
 
-    const intervalId = setInterval(getNewToken, 3 * 60 * 1000); // 3 phút
+    const intervalId = setInterval(getNewToken, 1 * 60 * 1000); // 3 phút
     // Cleanup function để clear interval khi component unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  const getNewToken = async () => {
-    if (dataUser) {
+  const getNewToken = useCallback(async () => {
+    const currentDataUser = dataUserRef.current;
+    if (currentDataUser) {
       setIsNeedGetNewToken(false);
-      const result = await getNewTokenByAPI(
-        { refreshToken: dataUser.token.refreshToken },
-        dataUser.token.accessToken
-      );
 
+      const result = await getNewTokenByAPI(
+        { refreshToken: currentDataUser.token.refreshToken },
+        currentDataUser.token.accessToken
+      );
+      console.log("getNewTokenByAPI", result);
       if (result?.status === 200) {
         dispatch(
           updateData({
             token: {
-              refreshToken: dataUser.token.refreshToken,
+              refreshToken: currentDataUser.token.refreshToken,
               accessToken: result.data.accessToken,
             },
-            user: dataUser.user,
+            user: currentDataUser.user,
           } as any)
         );
       } else if (result?.status === 403) {
         dispatch(logout());
       }
     }
-  };
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col min-h-screen">

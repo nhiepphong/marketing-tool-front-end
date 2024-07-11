@@ -18,4 +18,11 @@ export interface ElectronAPI {
   readCookieFile: () => Promise<string>;
   saveCookieFile: (cookie: string) => Promise<void>;
   stopRunTask: () => Promise<void>;
+  clearDataFromDB: () => Promise<void>;
+  addDataFromDB: (item: string) => Promise<any>;
+  getTotalCountItem: () => Promise<number>;
+  getDataForPagination: (
+    currentPage: number,
+    itemsPerPage: number
+  ) => Promise<any[]>;
 }
