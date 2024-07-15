@@ -17,8 +17,19 @@ export async function initializeDatabase() {
   console.log("initializeDatabase", dbPath);
 
   await db.run(`
+    CREATE TABLE IF NOT EXISTS group_data (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      date TEXT,
+      link TEXT,
+      status INTEGER
+    )
+  `);
+
+  await db.run(`
     CREATE TABLE IF NOT EXISTS scraped_data (
-      id INTEGER PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      group_id INTEGER,
       name TEXT,
       uid TEXT UNIQUE,
       gender TEXT,

@@ -24,6 +24,7 @@ export type DataUser = {
 
 export interface ScrapedItem {
   id: number;
+  group_id: number;
   name: string;
   uid: string;
   gender: string;
@@ -31,4 +32,12 @@ export interface ScrapedItem {
   phone: string | null;
   type: string | "";
   message: string;
+}
+
+export interface GroupItem {
+  id: number;
+  name: string;
+  date: string;
+  link: string;
+  status: number;
 }

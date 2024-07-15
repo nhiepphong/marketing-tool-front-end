@@ -1,14 +1,15 @@
 // excelExport.ts
 import ExcelJS from "exceljs";
-import { getDataInBatches, ScrapedItem, getTotalCount } from "./dbOperations";
+import { getDataInBatches, getTotalCount } from "./dbOperations";
 import { BrowserWindow, dialog } from "electron";
 import fs from "fs";
 
 export async function exportToExcel(
+  group_id: number,
   mainWindow: BrowserWindow,
   progressCallback: (progress: number) => void
 ): Promise<string | null> {
-  const totalRows = await getTotalCount();
+  const totalRows = await getTotalCount(group_id);
   if (totalRows === 0) {
     throw new Error("No data to export");
   }

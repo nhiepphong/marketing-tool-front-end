@@ -1,15 +1,5 @@
+import { GroupItem, ScrapedItem } from "../utils/interface.global";
 import { getDatabase } from "./database";
-
-export interface ScrapedItem {
-  id: number;
-  name: string;
-  uid: string;
-  gender: string;
-  link: string;
-  phone: string | null;
-  type: string;
-  message: string;
-}
 
 export async function addData(item: ScrapedItem): Promise<number> {
   const db = getDatabase();
@@ -17,8 +7,8 @@ export async function addData(item: ScrapedItem): Promise<number> {
   const result = await db.run(
     `
     INSERT OR REPLACE INTO scraped_data 
-    (id, name, uid, gender, link, phone, type, message) 
-    VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)
+    (name, uid, gender, link, phone, type, message, group_id) 
+    VALUES (?, ?, ?, ?, ?, ?, ?,?)
   `,
     [
       item.name,
@@ -28,6 +18,7 @@ export async function addData(item: ScrapedItem): Promise<number> {
       item.phone,
       item.type,
       item.message,
+      item.group_id,
     ]
   );
   console.log("addData End:", item);
@@ -39,26 +30,61 @@ export async function findByLink(link: string): Promise<ScrapedItem | null> {
   return await db.get("SELECT * FROM scraped_data WHERE link = ?", [link]);
 }
 
+export async function findByLinkAndGroupID(
+  link: string,
+  group_id: number
+): Promise<ScrapedItem | null> {
+  const db = getDatabase();
+  return await db.get(
+    "SELECT * FROM scraped_data WHERE link = ? AND group_id = ?",
+    [link, group_id]
+  );
+}
+
 export async function getDataByPage(
+  group_id: number,
   page: number,
   itemsPerPage: number
 ): Promise<ScrapedItem[]> {
   const db = getDatabase();
-  return await db.all("SELECT * FROM scraped_data LIMIT ? OFFSET ?", [
-    itemsPerPage,
-    (page - 1) * itemsPerPage,
-  ]);
+  if (group_id > 0) {
+    return await db.all(
+      "SELECT * FROM scraped_data WHERE group_id = ? LIMIT ? OFFSET ?",
+      [group_id, itemsPerPage, (page - 1) * itemsPerPage]
+    );
+  } else {
+    return [];
+    return await db.all("SELECT * FROM scraped_data LIMIT ? OFFSET ?", [
+      itemsPerPage,
+      (page - 1) * itemsPerPage,
+    ]);
+  }
 }
 
-export async function getTotalCount(): Promise<number> {
+export async function getTotalCount(group_id: number): Promise<number> {
   const db = getDatabase();
-  const result = await db.get("SELECT COUNT(*) as count FROM scraped_data");
-  console.log("getTotalCount", result, result.count);
-  return result.count;
+  if (group_id == 0) {
+    return 0;
+    const result = await db.get("SELECT COUNT(*) as count FROM scraped_data");
+    console.log("getTotalCount", result.count);
+    return result.count;
+  } else {
+    const result = await db.get(
+      "SELECT COUNT(*) as count FROM scraped_data WHERE group_id =?",
+      [group_id]
+    );
+    console.log("getTotalCount", result.count);
+    return result.count;
+  }
 }
 export function clearAllData(): void {
   const db = getDatabase();
-  db.run("DELETE FROM scraped_data");
+  db.run(`DELETE FROM scraped_data`, (err: any) => {
+    db.run(`VACUUM`, (err: any) => {});
+  });
+  db.run(`DELETE FROM group_data`, (err: any) => {
+    db.run(`VACUUM`, (err: any) => {});
+  });
 }
 
 export async function getDataInBatches(
@@ -80,4 +106,28 @@ export async function getDataInBatches(
   }
 
   return generate();
+}
+
+export async function newGroup(item: GroupItem): Promise<GroupItem | null> {
+  const db = getDatabase();
+  const result = await db.run(
+    `
+    INSERT OR REPLACE INTO group_data 
+    (name, date, link, status) 
+    VALUES (?, ?, ?, ?)
+  `,
+    [item.name, item.date, item.link, item.status]
+  );
+  const group = await getGroupByID(result.lastID);
+  console.log("newGroup:", group);
+  return group;
+}
+export async function getGroupByID(id: number): Promise<GroupItem | null> {
+  const db = getDatabase();
+  return await db.get("SELECT * FROM group_data WHERE id = ?", [id]);
+}
+
+export async function getAllGroup(): Promise<GroupItem | null> {
+  const db = getDatabase();
+  return await db.all("SELECT * FROM group_data");
 }

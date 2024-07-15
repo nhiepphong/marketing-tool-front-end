@@ -26,6 +26,24 @@ export function formatDateTime(isoString: string): string {
   });
 }
 
+export function getDateNowWithString(): string {
+  const date = new Date();
+  return date.toLocaleString("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
+export function getTimeNowToString(): string {
+  const date = new Date();
+  return date.getTime().toString();
+}
+
 export function parseCookieString(cookieString: string) {
   return cookieString.split(";").map((pair) => {
     let [name, ...values] = pair.trim().split("=");

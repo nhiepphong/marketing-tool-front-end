@@ -5,7 +5,9 @@ import { getUserData } from "../redux/slices/userSlices";
 import { showToast } from "../utils/showToast";
 import DataContext from "../context/DataContext";
 import Pagination from "../components/Pagination";
-import { ScrapedItem } from "../utils/interface.global";
+import { GroupItem, ScrapedItem } from "../utils/interface.global";
+import { getDateNowWithString, getTimeNowToString } from "../utils/utils";
+import ListViewFaebook from "../components/facebook/ListViewProps";
 
 const FacebookLayUID: React.FC = () => {
   const [url, setUrl] = useState(
@@ -15,28 +17,17 @@ const FacebookLayUID: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [cookie, setCookie] = useState("");
 
-  const { setIsNeedGetNewToken } = useContext(DataContext)!;
-
-  const [isAutoGetPhone, setIsAutoGetPhone] = useState(false);
-  const [currentItemGetPhone, setCurrentItemGetPhone] = useState(-1);
-
+  const [groupData, setGroupData] = useState<GroupItem | null>(null);
   const dataUser = useSelector(getUserData);
-  const [userData, setUserData] = useState<ScrapedItem[]>([]);
+
   const [searchType, setSearchType] = useState("personal");
   const [interactions, setInteractions] = useState({
     like: false,
     comment: false,
     share: false,
   });
-  const itemsPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [indexOfFirstItem, setIndexOfFirstItem] = useState(0);
-  const [totalRecord, settotalRecord] = useState(0);
 
-  const [currentItems, setCurrentItems] = useState<ScrapedItem[]>([]);
-
-  const [isExporting, setIsExporting] = useState(false);
-  const [progressExport, setProgressExport] = useState(0);
+  const [textReload, setTextReload] = useState("");
 
   useEffect(() => {
     // Đăng ký listener cho updates
@@ -47,7 +38,7 @@ const FacebookLayUID: React.FC = () => {
     window.electronAPI.onUpdateDataGetUIDArticle((event, data) => {
       //console.log("onUpdateDataGetUIDArticle", data);
       //setUserData(data);
-      loadDataList(currentPage);
+      setTextReload("0|" + getTimeNowToString());
     });
     window.electronAPI.onUpdateStatusToView((event, data: any) => {
       //console.log("onUpdateStatusToView", data);
@@ -64,7 +55,7 @@ const FacebookLayUID: React.FC = () => {
         console.log("showLog", data);
       });
 
-      loadDataList(1);
+      setTextReload("1|" + getTimeNowToString());
     });
     // Cleanup listener khi component unmount
     return () => {
@@ -90,17 +81,36 @@ const FacebookLayUID: React.FC = () => {
         message: "Vui lòng nhập link facebook để lấy UID",
       });
     }
-    await window.electronAPI.clearDataFromDB();
-    loadDataList(1);
-    setIsLoading(true);
-    setAlertMessage("Đang lấy UID, vui lòng chờ...");
-
-    if (searchType === "personal") {
-      getUIDFromLinkProfile();
-    } else {
-      getUIDFromLinkArticle();
+    //await window.electronAPI.clearDataFromDB();
+    try {
+      const group = await window.electronAPI.newGroupFromDB({
+        id: 0,
+        name: searchType,
+        date: getDateNowWithString(),
+        link: url,
+        status: 1,
+      });
+      setGroupData(group);
+      console.log("group", group);
+    } catch (error) {
+      console.log("Group error", error);
+      showToast({ type: "error", message: "Có lỗi không tạo được nhóm" });
     }
   };
+
+  useEffect(() => {
+    if (groupData != null) {
+      setTextReload("1|" + getTimeNowToString());
+      setIsLoading(true);
+      setAlertMessage("Đang lấy UID, vui lòng chờ...");
+
+      if (searchType === "personal") {
+        getUIDFromLinkProfile();
+      } else {
+        getUIDFromLinkArticle();
+      }
+    }
+  }, [groupData]);
 
   const getUIDFromLinkProfile = async () => {
     try {
@@ -114,10 +124,11 @@ const FacebookLayUID: React.FC = () => {
           showToast({ type: "error", message: result.message });
         } else {
           if (result.name != "" && result.uid != "") {
+            result.group_id = groupData?.id;
             await window.electronAPI.addDataFromDB(result);
           }
 
-          loadDataList(1);
+          setTextReload("1|" + getTimeNowToString());
         }
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
@@ -134,6 +145,7 @@ const FacebookLayUID: React.FC = () => {
   const getUIDFromLinkArticle = async () => {
     try {
       const result = await window.electronAPI.facebookGetUIDFromLinkArticle(
+        groupData ? groupData.id : 0,
         url,
         cookie,
         interactions
@@ -145,7 +157,6 @@ const FacebookLayUID: React.FC = () => {
           setAlertMessage("Lấy UID hoàn tất");
         } else {
         }
-        //setUserData(result);
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
       }
@@ -158,115 +169,12 @@ const FacebookLayUID: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    loadDataList(1);
-  }, [userData]);
-
-  useEffect(() => {
-    loadDataList(currentPage);
-  }, [currentPage]);
-
-  const loadDataList = async (_currentPage: number) => {
-    const _totalRecord = await window.electronAPI.getTotalCountItem();
-    settotalRecord(_totalRecord);
-    const _currentItems: ScrapedItem[] =
-      await window.electronAPI.getDataForPagination(_currentPage, itemsPerPage);
-
-    const _indexOfFirstItem = _currentPage * itemsPerPage - itemsPerPage;
-    setCurrentPage(_currentPage);
-    setIndexOfFirstItem(_indexOfFirstItem);
-    setCurrentItems(_currentItems);
-    //console.log("loadDataList totalRecord", _totalRecord);
-    //console.log("loadDataList _currentItems", _currentItems);
-  };
-
-  useEffect(() => {
-    if (isAutoGetPhone) {
-      if (currentItemGetPhone < userData.length) {
-        handleGetPhone(userData[currentItemGetPhone]);
-      } else {
-        showToast({ type: "success", message: "Đã lấy xong số điện thoại" });
-      }
-    }
-  }, [isAutoGetPhone, currentItemGetPhone]);
-
-  const getIndexInUserData = (uid: string) => {
-    return userData.findIndex((item) => item.uid === uid);
-  };
-
-  const handleGetPhone = async (item: ScrapedItem) => {
-    const index = getIndexInUserData(item.uid);
-    setCurrentItemGetPhone(index);
-    await getPhoneFromUID(item);
-
-    if (isAutoGetPhone) {
-      setCurrentItemGetPhone(index + 1);
-    } else {
-      setCurrentItemGetPhone(-1);
-    }
-  };
-
-  const getPhoneFromUID = async (item: ScrapedItem) => {
-    const result: any = await getPhoneFromUIDByAPI(
-      item,
-      dataUser.token.accessToken
-    );
-    if (result !== null) {
-      if (result.status === 200) {
-        if ((result.data.status = true)) {
-          const phones = result.data.data.phones;
-          let _phones = phones.map((phone: any) => phone.number);
-          userData[getIndexInUserData(item.uid)].phone = _phones.join(", ");
-          setUserData([...userData]);
-        } else {
-          showToast({ type: "error", message: result.data.message });
-        }
-      }
-      if (result.status === 403) {
-        setIsNeedGetNewToken(true);
-      } else {
-        showToast({ type: "error", message: result.data.message });
-      }
-    } else {
-      showToast({ type: "error", message: "Có lỗi xảy ra vui lòng thử lại" });
-    }
-  };
-
-  const handleExportExcel = async () => {
-    setIsExporting(true);
-    setProgressExport(0);
-
-    window.electronAPI.onUpdateProgressExxport((event, value: number) => {
-      console.log("onUpdateProgressExxport", value);
-      setProgressExport(Math.round(value));
-    });
-
-    try {
-      const result = await window.electronAPI.exportToExcel();
-      if (result.success) {
-        if (result.filePath) {
-          alert(`Excel file exported successfully to: ${result.filePath}`);
-        } else {
-          alert("Export was cancelled");
-        }
-      } else {
-        alert(`Export failed: ${result.error}`);
-      }
-    } catch (error: any) {
-      alert(`Export failed: ${error.message}`);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   const handleInteractionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInteractions({
       ...interactions,
       [e.target.name]: e.target.checked,
     });
   };
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   const onStop = () => {
     window.electronAPI.stopRunTask();
@@ -380,7 +288,12 @@ const FacebookLayUID: React.FC = () => {
         <></>
       )}
 
-      {currentItems.length > 0 && (
+      <ListViewFaebook
+        isLoading={isLoading}
+        group={groupData}
+        textReload={textReload}
+      />
+      {/* {currentItems.length > 0 && (
         <>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
@@ -459,7 +372,7 @@ const FacebookLayUID: React.FC = () => {
             onPageChange={paginate}
           />
         </>
-      )}
+      )} */}
     </>
   );
 };

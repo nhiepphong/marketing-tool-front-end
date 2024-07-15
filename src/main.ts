@@ -10,6 +10,7 @@ import log from "electron-log";
 import { initializeDatabase } from "./shared/database";
 import * as dbOps from "./shared/dbOperations";
 import { exportToExcel } from "./shared/excelExport";
+import { GroupItem } from "./utils/interface.global";
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -91,7 +92,13 @@ ipcMain.handle(
 
 ipcMain.handle(
   "facebook-get-uid-from-article",
-  async (event, url: string, cookies: string, interactions: any) => {
+  async (
+    event,
+    group_id: number,
+    url: string,
+    cookies: string,
+    interactions: any
+  ) => {
     try {
       isScrapingStopped = false;
       const result = await facebookGetUIDFromLinkArticle(
@@ -99,6 +106,7 @@ ipcMain.handle(
           isStopRequested: () => isScrapingStopped,
         },
         mainWindow,
+        group_id,
         url,
         cookies,
         interactions
@@ -150,21 +158,43 @@ ipcMain.handle("db-find-by-uid", async (event, link) => {
   return await dbOps.findByLink(link);
 });
 
-ipcMain.handle("db-get-data-by-page", async (event, page, itemsPerPage) => {
-  return await dbOps.getDataByPage(page, itemsPerPage);
-});
+ipcMain.handle(
+  "db-get-data-by-page",
+  async (event, group_id, page, itemsPerPage) => {
+    return await dbOps.getDataByPage(group_id, page, itemsPerPage);
+  }
+);
 
-ipcMain.handle("db-get-total-count", async () => {
-  return await dbOps.getTotalCount();
+ipcMain.handle("db-get-total-count", async (event, group_id) => {
+  return await dbOps.getTotalCount(group_id);
 });
 ipcMain.handle("clear-all-data", async () => {
   return await dbOps.clearAllData();
 });
 
-ipcMain.handle("export-excel", async (event) => {
+ipcMain.handle("db-new-group", async (event, item: GroupItem) => {
+  try {
+    const tmp = await dbOps.newGroup(item);
+    console.log("db-new-group", tmp);
+    return tmp;
+  } catch (error) {
+    return null;
+  }
+});
+
+ipcMain.handle("db-get-all-group", async () => {
+  try {
+    const tmp = await dbOps.getAllGroup();
+    return tmp;
+  } catch (error) {
+    return null;
+  }
+});
+
+ipcMain.handle("export-excel", async (event, group_id) => {
   if (mainWindow) {
     try {
-      const filePath = await exportToExcel(mainWindow, (progress) => {
+      const filePath = await exportToExcel(group_id, mainWindow, (progress) => {
         event.sender.send("update-export-progress-excel", progress);
       });
       return { success: true, filePath };

@@ -161,6 +161,7 @@ export async function facebookGetUIDFromProfile(
 export async function facebookGetUIDFromLinkArticle(
   option: ScrapingOptions,
   mainWindow: any,
+  group_id: number,
   url: string,
   cookieString: string,
   interactions: any
@@ -169,6 +170,7 @@ export async function facebookGetUIDFromLinkArticle(
     return facebookGetUIDFromLinkArticleVideo(
       option,
       mainWindow,
+      group_id,
       url,
       cookieString,
       interactions
@@ -177,6 +179,7 @@ export async function facebookGetUIDFromLinkArticle(
     return facebookGetUIDFromLinkArticlePost(
       option,
       mainWindow,
+      group_id,
       url,
       cookieString,
       interactions
@@ -188,6 +191,7 @@ export async function facebookGetUIDFromLinkArticle(
 export async function facebookGetUIDFromLinkArticleVideo(
   option: ScrapingOptions,
   mainWindow: any,
+  group_id: number,
   url: string,
   cookieString: string,
   interactions: any
@@ -239,7 +243,8 @@ export async function facebookGetUIDFromLinkArticleVideo(
           option,
           page,
           mainWindow,
-          cookieString
+          cookieString,
+          group_id
         );
       } catch (error) {
         console.log("getListURLProfileFromPopupUser:", error);
@@ -401,6 +406,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
                       gender: "",
                       phone: "",
                       type: "like",
+                      group_id: 0,
                     };
                     items.push(item);
                   }
@@ -453,7 +459,10 @@ export async function facebookGetUIDFromLinkArticleVideo(
         let items = removeDuplicatesWithLink(
           result.items.slice(previousLength)
         );
+
+        let count_item_new = 0;
         for (let item of items) {
+          item.group_id = group_id;
           const exists = await isItemInArray(item);
           if (!exists) {
             const profile_tmp = await facebookGetUIDFromProfile(
@@ -465,6 +474,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
               item = profile_tmp;
             }
             if (item.name != "" && item.uid != "") {
+              item.group_id = group_id;
               await dbOps.addData(item);
             }
             await sleep(getRandomInt(1, 2) * 1000);
@@ -477,10 +487,15 @@ export async function facebookGetUIDFromLinkArticleVideo(
                 item,
               ]);
             }
+
+            count_item_new++;
           }
         }
 
-        if (result.items.length === previousLength) {
+        console.log("previousLength", previousLength, result.items.length);
+        console.log("count_item_new", count_item_new);
+
+        if (previousLength == result.items.length && count_item_new == 0) {
           break;
         }
         previousLength = result.items.length;
@@ -537,10 +552,12 @@ export async function facebookGetUIDFromLinkArticleVideo(
 export async function facebookGetUIDFromLinkArticlePost(
   option: ScrapingOptions,
   mainWindow: any,
+  group_id: number,
   url: string,
   cookieString: string,
   interactions: any
 ): Promise<any> {
+  console.log("facebookGetUIDFromLinkArticlePost group_id", group_id);
   try {
     const tmp = await newPageAndAddCookie(url, cookieString);
     const browser = tmp.browser;
@@ -618,7 +635,8 @@ export async function facebookGetUIDFromLinkArticlePost(
           option,
           page,
           mainWindow,
-          cookieString
+          cookieString,
+          group_id
         );
       } catch (error) {
         console.log("getListURLProfileFromPopupUser:", error);
@@ -833,6 +851,7 @@ export async function facebookGetUIDFromLinkArticlePost(
           console.log("Comment removeDuplicatesWithLink items", items);
           let count_item_new = 0;
           for (let item of items) {
+            item.group_id = group_id;
             const exists = await isItemInArray(item);
             //console.log(`exists ${item.uid}=${exists}`);
             if (!exists) {
@@ -845,6 +864,8 @@ export async function facebookGetUIDFromLinkArticlePost(
                 item = profile_tmp;
               }
               if (item.name != "" && item.uid != "") {
+                item.group_id = group_id;
+                console.log("Post, group_id", item, group_id);
                 await dbOps.addData(item);
               }
               await sleep(getRandomInt(1, 2) * 1000);
@@ -862,12 +883,13 @@ export async function facebookGetUIDFromLinkArticlePost(
             }
           }
           console.log("previousLength", previousLength, result.items.length);
-          previousLength = result.items.length;
           console.log("count_item_new", count_item_new);
 
           if (previousLength == result.items.length && count_item_new == 0) {
             break;
           }
+          previousLength = result.items.length;
+
           // Scroll đến phần tử cuối cùng
           await page.evaluate(() => {
             window.scrollTo(0, document.body.scrollHeight);
@@ -913,7 +935,8 @@ async function getListURLProfileFromPopupUser(
   option: ScrapingOptions,
   page: Page,
   mainWindow: any,
-  cookieString: string
+  cookieString: string,
+  group_id: number
 ): Promise<any> {
   const xpath =
     '//div[contains(@class, "html-div")]/div[1]/div[1]/div[@data-visualcompletion="ignore-dynamic" and contains(@style, "padding-left")]';
@@ -998,6 +1021,7 @@ async function getListURLProfileFromPopupUser(
             phone: "",
             type: "like",
             message: "",
+            group_id: 0,
           };
           if (linkElement) {
             const tmp = cleanFacebookUrl(linkElement.href || "");
@@ -1010,6 +1034,7 @@ async function getListURLProfileFromPopupUser(
               phone: "",
               type: "like",
               message: "",
+              group_id: 0,
             };
           }
 
@@ -1022,7 +1047,7 @@ async function getListURLProfileFromPopupUser(
     );
 
     for (let item of newElements) {
-      const itemCheck = await dbOps.findByLink(item.link);
+      const itemCheck = await dbOps.findByLinkAndGroupID(item.link, group_id);
       if (itemCheck == null) {
         const profile_tmp = await facebookGetUIDFromProfile(
           item.link,
@@ -1038,6 +1063,7 @@ async function getListURLProfileFromPopupUser(
         break;
       }
       if (item.name != "" && item.uid != "") {
+        item.group_id = group_id;
         await dbOps.addData(item);
       }
       console.log("getListURLProfileFromPopupUser", item.link);
@@ -1126,8 +1152,8 @@ function removeDuplicatesWithUID(items: any[]): any[] {
   return Array.from(uniqueMap.values());
 }
 
-async function isItemInArray(item: any): Promise<boolean> {
-  const tmp = await dbOps.findByLink(item.link);
+async function isItemInArray(item: ScrapedItem): Promise<boolean> {
+  const tmp = await dbOps.findByLinkAndGroupID(item.link, item.group_id);
   return tmp ? true : false;
 }
 
@@ -1165,7 +1191,7 @@ async function newPageAndAddCookie(
       process.resourcesPath,
       chromiumConfig.executablePath
     );
-    console.log("executablePath main", executablePath);
+    //console.log("executablePath main", executablePath);
   } else {
     // Đường dẫn khi đang phát triển
     executablePath = path.join(
@@ -1176,7 +1202,7 @@ async function newPageAndAddCookie(
     );
     executablePath =
       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-    console.log("executablePath dev", executablePath);
+    //console.log("executablePath dev", executablePath);
   }
 
   if (!fs.existsSync(executablePath)) {
