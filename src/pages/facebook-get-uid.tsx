@@ -35,6 +35,9 @@ const FacebookLayUID: React.FC = () => {
 
   const [currentItems, setCurrentItems] = useState<ScrapedItem[]>([]);
 
+  const [isExporting, setIsExporting] = useState(false);
+  const [progressExport, setProgressExport] = useState(0);
+
   useEffect(() => {
     // Đăng ký listener cho updates
     console.log("Init");
@@ -42,12 +45,12 @@ const FacebookLayUID: React.FC = () => {
       setCookie(savedCookie);
     });
     window.electronAPI.onUpdateDataGetUIDArticle((event, data) => {
-      console.log("onUpdateDataGetUIDArticle", data);
+      //console.log("onUpdateDataGetUIDArticle", data);
       //setUserData(data);
       loadDataList(currentPage);
     });
     window.electronAPI.onUpdateStatusToView((event, data: any) => {
-      console.log("onUpdateStatusToView", data);
+      //console.log("onUpdateStatusToView", data);
       if (data.status == false) {
         setIsLoading(false);
         setAlertMessage(data.message);
@@ -56,6 +59,11 @@ const FacebookLayUID: React.FC = () => {
           message: data.message,
         });
       }
+
+      window.electronAPI.showLog((event, data) => {
+        console.log("showLog", data);
+      });
+
       loadDataList(1);
     });
     // Cleanup listener khi component unmount
@@ -105,7 +113,10 @@ const FacebookLayUID: React.FC = () => {
         if (result.message != "") {
           showToast({ type: "error", message: result.message });
         } else {
-          await window.electronAPI.addDataFromDB(result);
+          if (result.name != "" && result.uid != "") {
+            await window.electronAPI.addDataFromDB(result);
+          }
+
           loadDataList(1);
         }
       } else {
@@ -116,7 +127,7 @@ const FacebookLayUID: React.FC = () => {
     } catch (error) {
       console.error("Error:", error);
       setIsLoading(false);
-      setAlertMessage("Lấy UID, bị lỗi");
+      setAlertMessage("Profile Lấy UID, bị lỗi: " + error);
     }
   };
 
@@ -127,8 +138,13 @@ const FacebookLayUID: React.FC = () => {
         cookie,
         interactions
       );
-      //console.log("getUIDFromLinkArticle", result);
+      console.log("getUIDFromLinkArticle", result);
       if (result !== null) {
+        if (result.status == true) {
+          showToast({ type: "success", message: "Lấy UID hoàn tất" });
+          setAlertMessage("Lấy UID hoàn tất");
+        } else {
+        }
         //setUserData(result);
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
@@ -138,7 +154,7 @@ const FacebookLayUID: React.FC = () => {
     } catch (error) {
       console.error("Error:", error);
       setIsLoading(false);
-      setAlertMessage("Lấy UID, bị lỗi");
+      setAlertMessage("Article: Lấy UID, bị lỗi:" + error);
     }
   };
 
@@ -160,8 +176,8 @@ const FacebookLayUID: React.FC = () => {
     setCurrentPage(_currentPage);
     setIndexOfFirstItem(_indexOfFirstItem);
     setCurrentItems(_currentItems);
-    console.log("loadDataList totalRecord", _totalRecord);
-    console.log("loadDataList _currentItems", _currentItems);
+    //console.log("loadDataList totalRecord", _totalRecord);
+    //console.log("loadDataList _currentItems", _currentItems);
   };
 
   useEffect(() => {
@@ -216,8 +232,31 @@ const FacebookLayUID: React.FC = () => {
     }
   };
 
-  const handleExportExcel = () => {
-    console.log("Exporting data to Excel");
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    setProgressExport(0);
+
+    window.electronAPI.onUpdateProgressExxport((event, value: number) => {
+      console.log("onUpdateProgressExxport", value);
+      setProgressExport(Math.round(value));
+    });
+
+    try {
+      const result = await window.electronAPI.exportToExcel();
+      if (result.success) {
+        if (result.filePath) {
+          alert(`Excel file exported successfully to: ${result.filePath}`);
+        } else {
+          alert("Export was cancelled");
+        }
+      } else {
+        alert(`Export failed: ${result.error}`);
+      }
+    } catch (error: any) {
+      alert(`Export failed: ${error.message}`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleInteractionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,12 +389,17 @@ const FacebookLayUID: React.FC = () => {
             {isLoading ? (
               <></>
             ) : (
-              <button
-                onClick={handleExportExcel}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                Export Excel
-              </button>
+              <div>
+                <button
+                  onClick={handleExportExcel}
+                  disabled={isExporting}
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  {isExporting
+                    ? `Exporting... ${progressExport}%`
+                    : "Export to Excel"}
+                </button>
+              </div>
             )}
           </div>
           <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 mb-4">

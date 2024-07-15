@@ -25,4 +25,11 @@ export interface ElectronAPI {
     currentPage: number,
     itemsPerPage: number
   ) => Promise<any[]>;
+  showLog: (
+    callback: (event: Electron.IpcRendererEvent, data: any) => void
+  ) => void;
+  onUpdateProgressExxport: (
+    callback: (event: Electron.IpcRendererEvent, data: number) => void
+  ) => void;
+  exportToExcel: () => Promise<any>;
 }

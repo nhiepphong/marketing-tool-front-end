@@ -37,7 +37,8 @@ interface ScrapingOptions {
 
 export async function facebookGetUIDFromProfile(
   url: string,
-  cookieString: string
+  cookieString: string,
+  mainWindow: any | null
 ): Promise<any> {
   try {
     let tmp = null;
@@ -49,8 +50,9 @@ export async function facebookGetUIDFromProfile(
     if (tmp) {
       const browser = tmp.browser;
       const page: Page = tmp.page;
-      page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+      page.on("console", (msg) => console.log("PAGE PROFILE:", msg.text()));
 
+      console.log("Start", url);
       let result: any = {
         id: 0,
         uid: 0,
@@ -64,11 +66,12 @@ export async function facebookGetUIDFromProfile(
 
       if (check_login) {
         result.message = "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới";
-        try {
-          await browser.disconnect();
-        } catch (error) {}
+        // try {
+        //   await browser.disconnect();
+        // } catch (error) {}
 
         await browser.close();
+        console.log("browser.close();");
         return result;
       }
 
@@ -138,11 +141,13 @@ export async function facebookGetUIDFromProfile(
         result.link = url;
         result.gender = getGenderParsed(result.gender);
       }
-      try {
-        await browser.disconnect();
-      } catch (error) {}
-      await browser.close();
 
+      //   try {
+      //     await browser.disconnect();
+      //   } catch (error) {}
+
+      await browser.close();
+      //console.log("browser.close();", result.link);
       return result;
     } else {
       return null;
@@ -195,7 +200,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
     await page.exposeFunction(
       "facebookGetUIDFromProfile",
       (url: string, cookieString: string) => {
-        return facebookGetUIDFromProfile(url, cookieString);
+        return facebookGetUIDFromProfile(url, cookieString, mainWindow);
       }
     );
 
@@ -208,9 +213,9 @@ export async function facebookGetUIDFromLinkArticleVideo(
           message: "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới",
         });
       }
-      try {
-        await browser.disconnect();
-      } catch (error) {}
+      //   try {
+      //     await browser.disconnect();
+      //   } catch (error) {}
       await browser.close();
       return { status: false };
     }
@@ -453,12 +458,15 @@ export async function facebookGetUIDFromLinkArticleVideo(
           if (!exists) {
             const profile_tmp = await facebookGetUIDFromProfile(
               item.link,
-              cookieString
+              cookieString,
+              mainWindow
             );
             if (profile_tmp != null) {
               item = profile_tmp;
             }
-            await dbOps.addData(item);
+            if (item.name != "" && item.uid != "") {
+              await dbOps.addData(item);
+            }
             await sleep(getRandomInt(1, 2) * 1000);
 
             if (option.isStopRequested()) {
@@ -470,6 +478,10 @@ export async function facebookGetUIDFromLinkArticleVideo(
               ]);
             }
           }
+        }
+
+        if (result.items.length === previousLength) {
+          break;
         }
         previousLength = result.items.length;
 
@@ -510,9 +522,9 @@ export async function facebookGetUIDFromLinkArticleVideo(
         await sleep((getRandomInt(1, 4) + 2) * 1000);
       }
     }
-    try {
-      await browser.disconnect();
-    } catch (error) {}
+    // try {
+    //   await browser.disconnect();
+    // } catch (error) {}
     await browser.close();
     return { status: true };
   } catch (error) {
@@ -539,7 +551,7 @@ export async function facebookGetUIDFromLinkArticlePost(
     await page.exposeFunction(
       "facebookGetUIDFromProfile",
       (url: string, cookieString: string) => {
-        return facebookGetUIDFromProfile(url, cookieString);
+        return facebookGetUIDFromProfile(url, cookieString, mainWindow);
       }
     );
 
@@ -552,9 +564,9 @@ export async function facebookGetUIDFromLinkArticlePost(
           message: "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới",
         });
       }
-      try {
-        await browser.disconnect();
-      } catch (error) {}
+      //   try {
+      //     await browser.disconnect();
+      //   } catch (error) {}
       await browser.close();
       return { status: false };
     }
@@ -809,6 +821,7 @@ export async function facebookGetUIDFromLinkArticlePost(
         } catch (error) {
           console.log("result = await scrapeItems();", error);
         }
+        console.log("Comment result", result);
         if (result) {
           //console.log("Result", result);
           //console.log(`Result comment page ${i}`);
@@ -817,18 +830,23 @@ export async function facebookGetUIDFromLinkArticlePost(
           let items = removeDuplicatesWithLink(
             result.items.slice(previousLength)
           );
+          console.log("Comment removeDuplicatesWithLink items", items);
+          let count_item_new = 0;
           for (let item of items) {
             const exists = await isItemInArray(item);
             //console.log(`exists ${item.uid}=${exists}`);
             if (!exists) {
               const profile_tmp = await facebookGetUIDFromProfile(
                 item.link,
-                cookieString
+                cookieString,
+                mainWindow
               );
               if (profile_tmp != null) {
                 item = profile_tmp;
               }
-              await dbOps.addData(item);
+              if (item.name != "" && item.uid != "") {
+                await dbOps.addData(item);
+              }
               await sleep(getRandomInt(1, 2) * 1000);
 
               if (option.isStopRequested()) {
@@ -839,10 +857,17 @@ export async function facebookGetUIDFromLinkArticlePost(
                   item,
                 ]);
               }
+
+              count_item_new++;
             }
           }
+          console.log("previousLength", previousLength, result.items.length);
           previousLength = result.items.length;
+          console.log("count_item_new", count_item_new);
 
+          if (previousLength == result.items.length && count_item_new == 0) {
+            break;
+          }
           // Scroll đến phần tử cuối cùng
           await page.evaluate(() => {
             window.scrollTo(0, document.body.scrollHeight);
@@ -866,15 +891,16 @@ export async function facebookGetUIDFromLinkArticlePost(
           if (option.isStopRequested()) {
             break;
           }
+        } else {
         }
         // Đợi để trang load thêm nội dung
         await sleep((getRandomInt(1, 4) + 2) * 1000);
       }
     }
 
-    try {
-      await browser.disconnect();
-    } catch (error) {}
+    // try {
+    //   await browser.disconnect();
+    // } catch (error) {}
     await browser.close();
     return { status: true };
   } catch (error) {
@@ -1000,7 +1026,8 @@ async function getListURLProfileFromPopupUser(
       if (itemCheck == null) {
         const profile_tmp = await facebookGetUIDFromProfile(
           item.link,
-          cookieString
+          cookieString,
+          mainWindow
         );
         if (profile_tmp != null) {
           item = profile_tmp;
@@ -1010,7 +1037,9 @@ async function getListURLProfileFromPopupUser(
       if (option.isStopRequested()) {
         break;
       }
-      await dbOps.addData(item);
+      if (item.name != "" && item.uid != "") {
+        await dbOps.addData(item);
+      }
       console.log("getListURLProfileFromPopupUser", item.link);
       if (mainWindow) {
         mainWindow.webContents.send("update-data-get-uid-article", [item]);
@@ -1187,9 +1216,9 @@ async function newPageAndAddCookie(
     return { browser: browser, page: page };
   } catch (error) {
     console.error("Error in scrape-facebook:", error);
-    try {
-      await browser.disconnect();
-    } catch (error) {}
+    // try {
+    //   await browser.disconnect();
+    // } catch (error) {}
     await browser.close();
     throw error;
   }

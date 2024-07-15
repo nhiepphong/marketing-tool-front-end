@@ -13,14 +13,14 @@ export interface ScrapedItem {
 
 export async function addData(item: ScrapedItem): Promise<number> {
   const db = getDatabase();
+  console.log("addData Begin:", item);
   const result = await db.run(
     `
     INSERT OR REPLACE INTO scraped_data 
     (id, name, uid, gender, link, phone, type, message) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)
   `,
     [
-      item.id,
       item.name,
       item.uid,
       item.gender,
@@ -30,6 +30,7 @@ export async function addData(item: ScrapedItem): Promise<number> {
       item.message,
     ]
   );
+  console.log("addData End:", item);
   return result.changes;
 }
 
@@ -58,4 +59,25 @@ export async function getTotalCount(): Promise<number> {
 export function clearAllData(): void {
   const db = getDatabase();
   db.run("DELETE FROM scraped_data");
+}
+
+export async function getDataInBatches(
+  batchSize: number
+): Promise<AsyncIterableIterator<ScrapedItem[]>> {
+  const db = getDatabase();
+  let offset = 0;
+
+  async function* generate() {
+    while (true) {
+      const batch = await db.all(
+        "SELECT * FROM scraped_data LIMIT ? OFFSET ?",
+        [batchSize, offset]
+      );
+      if (batch.length === 0) break;
+      yield batch;
+      offset += batchSize;
+    }
+  }
+
+  return generate();
 }

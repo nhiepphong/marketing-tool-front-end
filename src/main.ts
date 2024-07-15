@@ -9,6 +9,7 @@ import { promisify } from "util";
 import log from "electron-log";
 import { initializeDatabase } from "./shared/database";
 import * as dbOps from "./shared/dbOperations";
+import { exportToExcel } from "./shared/excelExport";
 
 const readFileAsync = promisify(fs.readFile);
 const writeFileAsync = promisify(fs.writeFile);
@@ -78,7 +79,7 @@ ipcMain.handle(
   async (event, url: string, cookies: string) => {
     try {
       isScrapingStopped = false;
-      const result = await facebookGetUIDFromProfile(url, cookies);
+      const result = await facebookGetUIDFromProfile(url, cookies, mainWindow);
       console.log("facebook-get-uid-from-profile result:", result);
       return result;
     } catch (error) {
@@ -158,4 +159,18 @@ ipcMain.handle("db-get-total-count", async () => {
 });
 ipcMain.handle("clear-all-data", async () => {
   return await dbOps.clearAllData();
+});
+
+ipcMain.handle("export-excel", async (event) => {
+  if (mainWindow) {
+    try {
+      const filePath = await exportToExcel(mainWindow, (progress) => {
+        event.sender.send("update-export-progress-excel", progress);
+      });
+      return { success: true, filePath };
+    } catch (error: any) {
+      console.error("Error exporting to Excel:", error);
+      return { success: false, error: error.message };
+    }
+  }
 });

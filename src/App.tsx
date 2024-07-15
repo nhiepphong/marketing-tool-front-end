@@ -128,7 +128,7 @@ function App() {
         { refreshToken: currentDataUser.token.refreshToken },
         currentDataUser.token.accessToken
       );
-      console.log("getNewTokenByAPI", result);
+      //console.log("getNewTokenByAPI", result);
       if (result?.status === 200) {
         dispatch(
           updateData({

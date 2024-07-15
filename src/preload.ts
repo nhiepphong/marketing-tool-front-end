@@ -28,7 +28,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getTotalCountItem: () => ipcRenderer.invoke("db-get-total-count"),
   getDataForPagination: (currentPage: number, itemsPerPage: number) =>
     ipcRenderer.invoke("db-get-data-by-page", currentPage, itemsPerPage),
+  showLog: (callback: any) => ipcRenderer.on("log-pupp", callback),
+  onUpdateProgressExxport: (callback: any) =>
+    ipcRenderer.on("update-export-progress-excel", callback),
+  exportToExcel: () => ipcRenderer.invoke("export-excel"),
 });
-
 console.log("preload");
 export {};
