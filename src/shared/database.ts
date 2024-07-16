@@ -22,7 +22,8 @@ export async function initializeDatabase() {
       name TEXT,
       date TEXT,
       link TEXT,
-      status INTEGER
+      status INTEGER,
+      count_data INTEGER
     )
   `);
 
@@ -36,7 +37,8 @@ export async function initializeDatabase() {
       link TEXT,
       phone TEXT,
       type TEXT,
-      message TEXT
+      message TEXT,
+      is_send INTEGER
     )
   `);
 

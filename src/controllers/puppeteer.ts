@@ -3,6 +3,7 @@ import {
   getGenderParsed,
   getRandomInt,
   parseCookieString,
+  replaceKeywords,
   sleep,
 } from "../utils/utils";
 import path from "path";
@@ -11,6 +12,7 @@ import fs from "fs";
 import os from "os";
 import * as dbOps from "../shared/dbOperations";
 import { ScrapedItem } from "../utils/interface.global";
+import { delay } from "@reduxjs/toolkit/dist/utils";
 
 const chromiumInfo = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "chromium-info.json"), "utf-8")
@@ -405,7 +407,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
                       id: link.uid,
                       gender: "",
                       phone: "",
-                      type: "like",
+                      type: "comment",
                       group_id: 0,
                     };
                     items.push(item);
@@ -809,7 +811,7 @@ export async function facebookGetUIDFromLinkArticlePost(
                       id: link.uid,
                       gender: "",
                       phone: "",
-                      type: "like",
+                      type: "comment",
                     };
                     items.push(item);
                   }
@@ -1114,6 +1116,128 @@ async function getListURLProfileFromPopupUser(
   return { status: true };
 }
 
+export async function onSendMessageToUser(
+  mainWindow: any | null,
+  cookies: string,
+  dataSend: any,
+  group_id: number
+) {
+  let result: any = {
+    status: false,
+    message: "",
+  };
+  try {
+    const delay = dataSend.delay;
+    const file = dataSend.file;
+    let message = dataSend.message;
+    while (1) {
+      const data = await dbOps.getDataNotSendInGroup(group_id);
+      console.log("Data", data);
+      if (data) {
+        const url = data.link;
+
+        const replacements = {
+          gender:
+            data.gender == "Nam"
+              ? "Anh"
+              : data.gender == "Nữ"
+              ? "Chị"
+              : "Anh/Chị",
+          name: data.name,
+        };
+
+        message = replaceKeywords(message, replacements);
+
+        let tmp = null;
+        try {
+          tmp = await newPageAndAddCookie(url, cookies);
+        } catch (error) {
+          console.log("onSendMessageToUser", error);
+        }
+        if (tmp) {
+          const browser = tmp.browser;
+          const page: Page = tmp.page;
+          page.on("console", (msg) => console.log("PAGE PROFILE:", msg.text()));
+
+          console.log("Start", url);
+
+          const check_login: boolean = await checkLogin(page);
+
+          if (check_login) {
+            result.message =
+              "Cookie hết hiệu lực. Vui lòng cập nhật cookie mới";
+
+            await browser.close();
+            console.log("browser.close();");
+            break;
+          }
+
+          await sleep(2000);
+          const tmpClick = await page.click(
+            'xpath=//div[@aria-label="Message" and @role="button"]'
+          );
+          console.log("tmpClick", tmpClick);
+
+          const xpath =
+            'xpath=//div[@aria-label="Message" and @contenteditable="true" and @role="textbox"]';
+
+          await sleep(2000);
+          try {
+            const elementHandle = await page.$(xpath);
+            console.log("elementHandle", elementHandle);
+            if (elementHandle) {
+              await sleep(1000);
+              await elementHandle.type(message, {
+                delay: 100,
+              });
+              await sleep(1000);
+              await elementHandle.press("Enter", {
+                delay: 100,
+              });
+              console.log("press Enter");
+
+              while (1) {
+                try {
+                  const elementHandle = await page.$(
+                    'xpath=//div[@aria-label="Close chat" and @role="button"]'
+                  );
+                  if (elementHandle) {
+                    await sleep(2000);
+                    await page.click(
+                      'xpath=//div[@aria-label="Close chat" and @role="button"]'
+                    );
+                  } else {
+                    break;
+                  }
+                } catch (error) {
+                  break;
+                }
+              }
+            }
+            await browser.close();
+          } catch (error) {
+            console.log("elementHandle error", error);
+          }
+        }
+      } else {
+        result = {
+          status: false,
+          message: "Đã hoàn thành",
+        };
+        break;
+      }
+      await dbOps.updateIsSend(data.id, 1);
+      if (mainWindow) {
+        mainWindow.webContents.send("update-chat-function-to-view", result);
+      }
+      await sleep(delay * 1000);
+    }
+  } catch (error) {
+    console.error("Error in scrape-facebook:", error);
+    throw error;
+  }
+}
+
 function removeDuplicatesWithLink(items: any[]): any[] {
   const uniqueMap = new Map<string, any>();
 
@@ -1210,7 +1334,7 @@ async function newPageAndAddCookie(
   }
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
     executablePath: executablePath,
     args: [
       "--no-sandbox",

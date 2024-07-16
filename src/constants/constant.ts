@@ -29,7 +29,9 @@ export interface ElectronAPI {
     currentPage: number,
     itemsPerPage: number
   ) => Promise<any[]>;
+  updateIsSendAllDataFromDB: (is_send: number) => Promise<any>;
   newGroupFromDB: (item: GroupItem) => Promise<any>;
+  updateCountDataForGroupFromDB: (count_data: number) => Promise<any>;
   getAllGroup: () => Promise<any>;
   showLog: (
     callback: (event: Electron.IpcRendererEvent, data: any) => void
@@ -38,4 +40,13 @@ export interface ElectronAPI {
     callback: (event: Electron.IpcRendererEvent, data: number) => void
   ) => void;
   exportToExcel: (group_id: number) => Promise<any>;
+
+  onSendChatToUser: (
+    cookies: string,
+    dataSend: string,
+    group_id: number
+  ) => Promise<any>;
+  onUpdateStatusChatFunction: (
+    callback: (event: Electron.IpcRendererEvent, data: any) => void
+  ) => void;
 }

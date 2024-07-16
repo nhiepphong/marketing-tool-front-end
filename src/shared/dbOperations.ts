@@ -7,8 +7,8 @@ export async function addData(item: ScrapedItem): Promise<number> {
   const result = await db.run(
     `
     INSERT OR REPLACE INTO scraped_data 
-    (name, uid, gender, link, phone, type, message, group_id) 
-    VALUES (?, ?, ?, ?, ?, ?, ?,?)
+    (name, uid, gender, link, phone, type, message, group_id, is_send) 
+    VALUES (?, ?, ?, ?, ?, ?, ?,?,0)
   `,
     [
       item.name,
@@ -39,6 +39,36 @@ export async function findByLinkAndGroupID(
     "SELECT * FROM scraped_data WHERE link = ? AND group_id = ?",
     [link, group_id]
   );
+}
+
+export async function getDataNotSendInGroup(
+  group_id: number
+): Promise<ScrapedItem | null> {
+  const db = getDatabase();
+  return await db.get(
+    "SELECT * FROM scraped_data WHERE is_send = 0 AND group_id = ?",
+    [group_id]
+  );
+}
+
+export async function updateIsSend(
+  id: number,
+  isSend: number
+): Promise<number> {
+  const db = getDatabase();
+
+  const result = await db.run(
+    `UPDATE scraped_data SET is_send = ? WHERE id = ?`,
+    [isSend, id]
+  );
+  return result.changes;
+}
+
+export async function updateAllIsSend(isSend: number): Promise<number> {
+  const db = getDatabase();
+
+  const result = await db.run(`UPDATE scraped_data SET is_send = ?`, [isSend]);
+  return result.changes;
 }
 
 export async function getDataByPage(
@@ -113,8 +143,8 @@ export async function newGroup(item: GroupItem): Promise<GroupItem | null> {
   const result = await db.run(
     `
     INSERT OR REPLACE INTO group_data 
-    (name, date, link, status) 
-    VALUES (?, ?, ?, ?)
+    (name, date, link, status, count_data) 
+    VALUES (?, ?, ?, ?, 0)
   `,
     [item.name, item.date, item.link, item.status]
   );
@@ -130,4 +160,15 @@ export async function getGroupByID(id: number): Promise<GroupItem | null> {
 export async function getAllGroup(): Promise<GroupItem | null> {
   const db = getDatabase();
   return await db.all("SELECT * FROM group_data");
+}
+
+export async function updateCountDataForGroup(
+  count_data: number
+): Promise<number> {
+  const db = getDatabase();
+
+  const result = await db.run(`UPDATE group_data SET count_data = ?`, [
+    count_data,
+  ]);
+  return result.changes;
 }

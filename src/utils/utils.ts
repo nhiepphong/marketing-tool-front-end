@@ -100,3 +100,13 @@ export function cleanFacebookUrl(url: string): string {
     return url; // Trả về URL gốc nếu có lỗi
   }
 }
+
+export function replaceKeywords(
+  message: string,
+  replacements: Record<string, string>
+): string {
+  return Object.entries(replacements).reduce((acc, [key, value]) => {
+    const regex = new RegExp(`{${key}}`, "g");
+    return acc.replace(regex, value);
+  }, message);
+}

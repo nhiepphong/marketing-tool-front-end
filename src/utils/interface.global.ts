@@ -40,4 +40,5 @@ export interface GroupItem {
   date: string;
   link: string;
   status: number;
+  count_data: number;
 }

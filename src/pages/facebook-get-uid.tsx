@@ -7,7 +7,7 @@ import DataContext from "../context/DataContext";
 import Pagination from "../components/Pagination";
 import { GroupItem, ScrapedItem } from "../utils/interface.global";
 import { getDateNowWithString, getTimeNowToString } from "../utils/utils";
-import ListViewFaebook from "../components/facebook/ListViewProps";
+import ListViewFaebook from "../components/facebook/ListViewFaebook";
 
 const FacebookLayUID: React.FC = () => {
   const [url, setUrl] = useState(
@@ -83,12 +83,26 @@ const FacebookLayUID: React.FC = () => {
     }
     //await window.electronAPI.clearDataFromDB();
     try {
+      let nameGroup = "";
+      if (searchType == "personal") {
+        nameGroup = "Cá nhân";
+      } else {
+        nameGroup = "Bài Viết:";
+        if (interactions.like && interactions.comment) {
+          nameGroup = "Bài Viết: Like và Comment";
+        } else if (interactions.like) {
+          nameGroup = "Bài Viết: Like";
+        } else if (interactions.comment) {
+          nameGroup = "Bài Viết: Comment";
+        }
+      }
       const group = await window.electronAPI.newGroupFromDB({
         id: 0,
-        name: searchType,
+        name: nameGroup,
         date: getDateNowWithString(),
         link: url,
         status: 1,
+        count_data: 0,
       });
       setGroupData(group);
       console.log("group", group);
@@ -126,6 +140,10 @@ const FacebookLayUID: React.FC = () => {
           if (result.name != "" && result.uid != "") {
             result.group_id = groupData?.id;
             await window.electronAPI.addDataFromDB(result);
+            const count = await window.electronAPI.getTotalCountItem(
+              result.group_id
+            );
+            await window.electronAPI.updateCountDataForGroupFromDB(count);
           }
 
           setTextReload("1|" + getTimeNowToString());
@@ -157,6 +175,11 @@ const FacebookLayUID: React.FC = () => {
           setAlertMessage("Lấy UID hoàn tất");
         } else {
         }
+
+        const count = await window.electronAPI.getTotalCountItem(
+          groupData ? groupData.id : 0
+        );
+        await window.electronAPI.updateCountDataForGroupFromDB(count);
       } else {
         showToast({ type: "error", message: "Không tìm thấy UID" });
       }

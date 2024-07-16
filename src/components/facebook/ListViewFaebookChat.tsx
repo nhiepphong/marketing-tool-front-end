@@ -14,7 +14,7 @@ interface ListViewProps {
   textReload: string;
 }
 
-const ListViewFaebook: React.FC<ListViewProps> = ({
+const ListViewFaebookChat: React.FC<ListViewProps> = ({
   isLoading,
   group,
   textReload,
@@ -192,13 +192,13 @@ const ListViewFaebook: React.FC<ListViewProps> = ({
                     UID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
+                    Status
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentItems.map((user, index: number) => (
-                  <tr key={indexOfFirstItem + index + 1}>
+                  <tr key={user.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {indexOfFirstItem + index + 1}
                     </td>
@@ -240,4 +240,4 @@ const ListViewFaebook: React.FC<ListViewProps> = ({
   );
 };
 
-export default ListViewFaebook;
+export default ListViewFaebookChat;

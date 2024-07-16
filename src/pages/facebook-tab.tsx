@@ -4,6 +4,7 @@ import FacebookUIDToPhone from "./facebook-get-phone";
 import Sidebar from "../components/facebook/Sidebar";
 import FacebookHistory from "./facebook-history";
 import FacebookSettings from "./facebook-settings";
+import FacebookChat from "./facebook-chat";
 
 const FacebookTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState("layUID");
@@ -16,6 +17,8 @@ const FacebookTab: React.FC = () => {
         return <FacebookUIDToPhone />;
       case "history":
         return <FacebookHistory />;
+      case "chat":
+        return <FacebookChat />;
       case "settings":
         return <FacebookSettings />;
       default:

@@ -3,6 +3,7 @@ import path from "path";
 import {
   facebookGetUIDFromLinkArticle,
   facebookGetUIDFromProfile,
+  onSendMessageToUser,
 } from "./controllers/puppeteer";
 import fs from "fs";
 import { promisify } from "util";
@@ -18,8 +19,8 @@ const writeFileAsync = promisify(fs.writeFile);
 log.transports.file.level = "info";
 log.info("Application starting...");
 
-//const isDev = !app.isPackaged;
-const isDev = false;
+const isDev = !app.isPackaged;
+//const isDev = false;
 
 let isScrapingStopped = false;
 
@@ -168,6 +169,11 @@ ipcMain.handle(
 ipcMain.handle("db-get-total-count", async (event, group_id) => {
   return await dbOps.getTotalCount(group_id);
 });
+
+ipcMain.handle("db-update-all-is-send-data", async (event, is_send) => {
+  return await dbOps.updateAllIsSend(is_send);
+});
+
 ipcMain.handle("clear-all-data", async () => {
   return await dbOps.clearAllData();
 });
@@ -191,6 +197,10 @@ ipcMain.handle("db-get-all-group", async () => {
   }
 });
 
+ipcMain.handle("db-update-count-data-group", async (event, count_data) => {
+  return await dbOps.updateCountDataForGroup(count_data);
+});
+
 ipcMain.handle("export-excel", async (event, group_id) => {
   if (mainWindow) {
     try {
@@ -204,3 +214,23 @@ ipcMain.handle("export-excel", async (event, group_id) => {
     }
   }
 });
+
+ipcMain.handle(
+  "send-chat-to-user",
+  async (event, cookies, dataSend, group_id) => {
+    try {
+      isScrapingStopped = false;
+      const result = await onSendMessageToUser(
+        mainWindow,
+        cookies,
+        dataSend,
+        group_id
+      );
+      console.log("send-chat-to-user result:", result);
+      return result;
+    } catch (error) {
+      console.error("Error in send-chat-to-user:", error);
+      throw error;
+    }
+  }
+);

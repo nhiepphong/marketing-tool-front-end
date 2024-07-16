@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import ListViewFaebook from "../components/facebook/ListViewProps";
+import ListViewFaebook from "../components/facebook/ListViewFaebook";
 import { GroupItem } from "../utils/interface.global";
 
 const FacebookHistory: React.FC = () => {
@@ -44,7 +44,7 @@ const FacebookHistory: React.FC = () => {
             {groups.length > 0 ? (
               groups.map((group, index) => (
                 <option value={group.id} key={group.id}>
-                  {group.name} - {group.date}
+                  {group.name} - {group.count_data} - {group.date}
                 </option>
               ))
             ) : (
