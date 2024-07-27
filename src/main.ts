@@ -3,6 +3,7 @@ import path from "path";
 import {
   facebookGetUIDFromLinkArticle,
   facebookGetUIDFromProfile,
+  onOpenBrowerWithAccountFacebook,
   onSendMessageToUser,
 } from "./controllers/puppeteer";
 import fs from "fs";
@@ -234,3 +235,13 @@ ipcMain.handle(
     }
   }
 );
+
+ipcMain.handle("open-account-facebook", async (event, cookies) => {
+  try {
+    onOpenBrowerWithAccountFacebook(cookies);
+    console.log("open-account-facebook:");
+  } catch (error) {
+    console.error("Error in open-account-facebook:", error);
+    throw error;
+  }
+});

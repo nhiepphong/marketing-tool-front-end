@@ -1,9 +1,5 @@
 import { GroupItem } from "../utils/interface.global";
 
-export enum PAGE_EXTEND {
-  PAGE_GAME = "http://localhost:3000",
-}
-
 export interface ElectronAPI {
   facebookGetUIDFromProfile: (url: string, cookies: string) => Promise<any>;
   facebookGetUIDFromLinkArticle: (
@@ -49,4 +45,5 @@ export interface ElectronAPI {
   onUpdateStatusChatFunction: (
     callback: (event: Electron.IpcRendererEvent, data: any) => void
   ) => void;
+  openAccountFacebookTest: (cookies: string) => Promise<any>;
 }

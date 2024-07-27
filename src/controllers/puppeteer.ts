@@ -1172,6 +1172,24 @@ export async function onSendMessageToUser(
             break;
           }
 
+          while (1) {
+            try {
+              const elementHandle = await page.$(
+                'xpath=//div[@aria-label="Close chat" and @role="button"]'
+              );
+              if (elementHandle) {
+                await sleep(2000);
+                await page.click(
+                  'xpath=//div[@aria-label="Close chat" and @role="button"]'
+                );
+              } else {
+                break;
+              }
+            } catch (error) {
+              break;
+            }
+          }
+
           await sleep(2000);
           const tmpClick = await page.click(
             'xpath=//div[@aria-label="Message" and @role="button"]'
@@ -1195,7 +1213,7 @@ export async function onSendMessageToUser(
                 delay: 100,
               });
               console.log("press Enter");
-
+              await sleep(3000);
               while (1) {
                 try {
                   const elementHandle = await page.$(
@@ -1300,9 +1318,25 @@ async function checkLogin(page: Page) {
   return result;
 }
 
+export async function onOpenBrowerWithAccountFacebook(cookieString: string) {
+  const url = "https://facebook.com";
+  try {
+    let tmp = null;
+    try {
+      tmp = await newPageAndAddCookie(url, cookieString, false);
+    } catch (error) {
+      console.log("onOpenBrowerWithAccountFacebook", error);
+    }
+  } catch (error) {
+    console.error("Error in onOpenBrowerWithAccountFacebook:", error);
+    return null;
+  }
+}
+
 async function newPageAndAddCookie(
   url: string,
-  cookieString: string
+  cookieString: string,
+  headless: boolean = false
 ): Promise<RESULT_PAGE> {
   const platformKey = getPlatformKey();
   const chromiumConfig = chromiumInfo[platformKey];
@@ -1334,17 +1368,13 @@ async function newPageAndAddCookie(
   }
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: headless,
     executablePath: executablePath,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-    ],
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   const page: Page = await browser.newPage();
-  await page.setViewport({ width: 1080, height: 1024 });
+  await page.setViewport({ width: 768, height: 1024 });
   // Set cookies if provided
   try {
     const cookies = parseCookieString(cookieString);
