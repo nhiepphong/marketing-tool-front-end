@@ -45,5 +45,11 @@ export interface ElectronAPI {
   onUpdateStatusChatFunction: (
     callback: (event: Electron.IpcRendererEvent, data: any) => void
   ) => void;
-  openAccountFacebookTest: (cookies: string) => Promise<any>;
+  openAccountFacebookTest: (
+    cookies: string,
+    isGetCookie: boolean
+  ) => Promise<any>;
+  onUpdateCookieToView: (
+    callback: (event: Electron.IpcRendererEvent, cookies: string) => void
+  ) => void;
 }

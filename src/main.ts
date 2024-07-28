@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, session } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import {
   facebookGetUIDFromLinkArticle,
@@ -221,6 +221,11 @@ ipcMain.handle(
   async (event, cookies, dataSend, group_id) => {
     try {
       isScrapingStopped = false;
+      // if (dataSend.file) {
+      //   const image = nativeImage.createFromDataURL(dataSend.file);
+      //   clipboard.writeImage(image);
+      // }
+
       const result = await onSendMessageToUser(
         mainWindow,
         cookies,
@@ -236,9 +241,9 @@ ipcMain.handle(
   }
 );
 
-ipcMain.handle("open-account-facebook", async (event, cookies) => {
+ipcMain.handle("open-account-facebook", async (event, cookies, isGetCookie) => {
   try {
-    onOpenBrowerWithAccountFacebook(cookies);
+    onOpenBrowerWithAccountFacebook(mainWindow, cookies, isGetCookie);
     console.log("open-account-facebook:");
   } catch (error) {
     console.error("Error in open-account-facebook:", error);

@@ -57,8 +57,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("send-chat-to-user", cookies, dataSend, group_id),
   onUpdateStatusChatFunction: (callback: any) =>
     ipcRenderer.on("update-chat-function-to-view", callback),
-  openAccountFacebookTest: (cookies: string) =>
-    ipcRenderer.invoke("open-account-facebook", cookies),
+  openAccountFacebookTest: (cookies: string, isGetCookie: boolean) =>
+    ipcRenderer.invoke("open-account-facebook", cookies, isGetCookie),
+  onUpdateCookieToView: (callback: any) =>
+    ipcRenderer.on("update-cookie-to-view", callback),
 });
 console.log("preload");
 export {};

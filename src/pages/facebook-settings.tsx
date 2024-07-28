@@ -7,6 +7,9 @@ const FacebookSettings: React.FC = () => {
     window.electronAPI.readCookieFile().then((savedCookie: string) => {
       setCookie(savedCookie);
     });
+    window.electronAPI.onUpdateCookieToView((event, cookie: string) => {
+      setCookie(cookie);
+    });
   }, []);
 
   const handleSave = async () => {
@@ -21,8 +24,15 @@ const FacebookSettings: React.FC = () => {
 
   const handleOpenAccount = async () => {
     try {
-      await window.electronAPI.openAccountFacebookTest(cookie);
-      alert("Mở Tài khoản thành công!");
+      await window.electronAPI.openAccountFacebookTest(cookie, false);
+    } catch (error) {
+      alert("Có lỗi xảy ra khi mở tài khoản.");
+    }
+  };
+
+  const handleOpenLoginFacebook = async () => {
+    try {
+      await window.electronAPI.openAccountFacebookTest(cookie, true);
     } catch (error) {
       alert("Có lỗi xảy ra khi mở tài khoản.");
     }
@@ -66,6 +76,13 @@ const FacebookSettings: React.FC = () => {
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
       >
         Lưu
+      </button>
+
+      <button
+        onClick={handleOpenLoginFacebook}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-[5px]"
+      >
+        Đăng nhập Facebook Lấy Cookie
       </button>
 
       <button

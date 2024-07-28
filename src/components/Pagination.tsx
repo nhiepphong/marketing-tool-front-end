@@ -11,48 +11,41 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
 }) => {
-  const renderPageNumbers = (): React.ReactNode[] => {
-    const pageNumbers: React.ReactNode[] = [];
-    const DOTS = "...";
+  const DOTS = "...";
 
-    const range = (start: number, end: number) => {
-      const length = end - start + 1;
-      return Array.from({ length }, (_, idx) => idx + start);
-    };
+  const range = (start: number, end: number) => {
+    return Array.from({ length: end - start + 1 }, (_, idx) => start + idx);
+  };
 
-    const leftSiblingIndex = Math.max(currentPage - 1, 1);
-    const rightSiblingIndex = Math.min(currentPage + 1, totalPages);
-
-    const shouldShowLeftDots = leftSiblingIndex > 2;
-    const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
-
-    if (!shouldShowLeftDots && shouldShowRightDots) {
-      const leftItemCount = 3 + 2;
-      const leftRange = range(1, leftItemCount);
-
-      return [...leftRange, DOTS, totalPages].map(renderPageItem);
+  const renderPagination = (): (number | string)[] => {
+    if (totalPages <= 7) {
+      return range(1, totalPages);
     }
 
-    if (shouldShowLeftDots && !shouldShowRightDots) {
-      const rightItemCount = 3 + 2;
-      const rightRange = range(totalPages - rightItemCount + 1, totalPages);
-
-      return [1, DOTS, ...rightRange].map(renderPageItem);
+    if (currentPage <= 3) {
+      return [...range(1, 5), DOTS, totalPages];
     }
 
-    if (shouldShowLeftDots && shouldShowRightDots) {
-      const middleRange = range(leftSiblingIndex, rightSiblingIndex);
-      return [1, DOTS, ...middleRange, DOTS, totalPages].map(renderPageItem);
+    if (currentPage >= totalPages - 2) {
+      return [1, DOTS, ...range(totalPages - 4, totalPages)];
     }
 
-    return range(1, totalPages).map(renderPageItem);
+    return [
+      1,
+      DOTS,
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      DOTS,
+      totalPages,
+    ];
   };
 
   const renderPageItem = (
     item: number | string,
     index: number
   ): React.ReactNode => {
-    if (typeof item === "string") {
+    if (item === DOTS) {
       return (
         <span key={`${item}-${index}`} className="mx-1">
           {item}
@@ -63,7 +56,7 @@ const Pagination: React.FC<PaginationProps> = ({
     return (
       <button
         key={item}
-        onClick={() => onPageChange(item)}
+        onClick={() => onPageChange(item as number)}
         className={`mx-1 px-3 py-1 rounded ${
           currentPage === item
             ? "bg-blue-500 text-white"
@@ -75,7 +68,11 @@ const Pagination: React.FC<PaginationProps> = ({
     );
   };
 
-  return <div className="flex justify-center">{renderPageNumbers()}</div>;
+  return (
+    <div className="flex justify-center">
+      {renderPagination().map(renderPageItem)}
+    </div>
+  );
 };
 
 export default Pagination;

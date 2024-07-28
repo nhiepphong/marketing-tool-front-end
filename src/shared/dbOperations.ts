@@ -61,6 +61,7 @@ export async function updateIsSend(
     `UPDATE scraped_data SET is_send = ? WHERE id = ?`,
     [isSend, id]
   );
+  console.log("updateIsSend", id, isSend, result);
   return result.changes;
 }
 

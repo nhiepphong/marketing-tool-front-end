@@ -30,6 +30,7 @@ export interface ScrapedItem {
   gender: string;
   link: string;
   phone: string | null;
+  is_send: number | 0;
   type: string | "";
   message: string;
 }

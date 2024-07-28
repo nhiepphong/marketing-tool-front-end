@@ -209,18 +209,13 @@ const ListViewFaebookChat: React.FC<ListViewProps> = ({
                       {user.uid}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.phone ? (
-                        user.phone
-                      ) : currentItemGetPhone === indexOfFirstItem + index ? (
+                      {user.is_send ? (
                         <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs">
-                          Loading..
+                          Đã gửi
                         </button>
                       ) : (
-                        <button
-                          onClick={() => handleGetPhone(user)}
-                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs"
-                        >
-                          Get Phone
+                        <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs">
+                          Chưa gửi
                         </button>
                       )}
                     </td>

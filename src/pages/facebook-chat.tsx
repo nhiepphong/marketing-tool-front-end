@@ -11,7 +11,7 @@ const FacebookChat: React.FC = () => {
   const [isConfigExpanded, setIsConfigExpanded] = useState(true);
   const [isMessageExpanded, setIsMessageExpanded] = useState(true);
   const [isReportExpanded, setIsReportExpanded] = useState(true);
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState<any>(null);
   const [message, setMessage] = useState<string>("");
   const [delay, setDelay] = useState<number>(3);
   const [cookie, setCookie] = useState("");
@@ -79,9 +79,23 @@ const FacebookChat: React.FC = () => {
     console.log("message", message);
     console.log("Delay", delay);
     console.log("file", file);
-    await window.electronAPI.updateIsSendAllDataFromDB(0);
-    setDataSend({ message: message, delay: delay, file: file, status: true });
+
+    const link_file = file ? file.path : "";
+    setDataSend({
+      message: message,
+      delay: delay,
+      file: link_file,
+      status: true,
+    });
   };
+
+  const fileToBase64 = (file: File) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
 
   useEffect(() => {
     onStartSend();

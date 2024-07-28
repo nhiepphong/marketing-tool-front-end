@@ -1,4 +1,10 @@
-import puppeteer, { Browser, ElementHandle, Page } from "puppeteer-core";
+import puppeteer, {
+  Browser,
+  Cookie,
+  ElementHandle,
+  Page,
+  Protocol,
+} from "puppeteer-core";
 import {
   getGenderParsed,
   getRandomInt,
@@ -7,12 +13,12 @@ import {
   sleep,
 } from "../utils/utils";
 import path from "path";
-import { app } from "electron";
+import { app, clipboard } from "electron";
 import fs from "fs";
 import os from "os";
 import * as dbOps from "../shared/dbOperations";
 import { ScrapedItem } from "../utils/interface.global";
-import { delay } from "@reduxjs/toolkit/dist/utils";
+import { v4 as uuidv4 } from "uuid";
 
 const chromiumInfo = JSON.parse(
   fs.readFileSync(path.join(__dirname, "..", "chromium-info.json"), "utf-8")
@@ -63,6 +69,7 @@ export async function facebookGetUIDFromProfile(
         link: "",
         phone: "",
         message: "",
+        is_send: 0,
       };
       const check_login: boolean = await checkLogin(page);
 
@@ -117,6 +124,7 @@ export async function facebookGetUIDFromProfile(
                 link: "",
                 phone: "",
                 message: "",
+                is_send: 0,
               };
             } else {
               const { id, gender, name } = jsonObject.profile_owner;
@@ -131,6 +139,7 @@ export async function facebookGetUIDFromProfile(
                 link: "",
                 phone: "",
                 message: "",
+                is_send: 0,
               };
             }
           }
@@ -409,6 +418,7 @@ export async function facebookGetUIDFromLinkArticleVideo(
                       phone: "",
                       type: "comment",
                       group_id: 0,
+                      is_send: 0,
                     };
                     items.push(item);
                   }
@@ -1024,6 +1034,7 @@ async function getListURLProfileFromPopupUser(
             type: "like",
             message: "",
             group_id: 0,
+            is_send: 0,
           };
           if (linkElement) {
             const tmp = cleanFacebookUrl(linkElement.href || "");
@@ -1037,6 +1048,7 @@ async function getListURLProfileFromPopupUser(
               type: "like",
               message: "",
               group_id: 0,
+              is_send: 0,
             };
           }
 
@@ -1157,9 +1169,9 @@ export async function onSendMessageToUser(
         if (tmp) {
           const browser = tmp.browser;
           const page: Page = tmp.page;
-          page.on("console", (msg) => console.log("PAGE PROFILE:", msg.text()));
+          //page.on("console", (msg) => console.log("PAGE PROFILE:", msg.text()));
 
-          console.log("Start", url);
+          //console.log("Start", url);
 
           const check_login: boolean = await checkLogin(page);
 
@@ -1172,6 +1184,7 @@ export async function onSendMessageToUser(
             break;
           }
 
+          // Đóng tất cả các popup chat
           while (1) {
             try {
               const elementHandle = await page.$(
@@ -1190,6 +1203,19 @@ export async function onSendMessageToUser(
             }
           }
 
+          //Scroll giả lập như người  thật
+
+          // Lấy vị trí scroll hiện tại
+          const initialPosition = await page.evaluate(() => window.pageYOffset);
+          const d = getRandomInt(5, 10) * 100;
+          // Scroll xuống 100px
+          await smoothScroll(page, d, 1000);
+          // Đợi 2 giây
+          await sleep(2000);
+          // Scroll trở lại vị trí ban đầu
+          await smoothScroll(page, -d, 1000);
+
+          //Tìm và mở nút chat
           await sleep(2000);
           const tmpClick = await page.click(
             'xpath=//div[@aria-label="Message" and @role="button"]'
@@ -1205,9 +1231,23 @@ export async function onSendMessageToUser(
             console.log("elementHandle", elementHandle);
             if (elementHandle) {
               await sleep(1000);
-              await elementHandle.type(message, {
-                delay: 100,
-              });
+
+              if (file != "") {
+                // Upload hình ảnh
+                await uploadImage(page, file);
+              }
+
+              await sleep(1000);
+              for (const char of message) {
+                if (char === "\n") {
+                  // Mô phỏng Shift + Enter cho xuống dòng
+                  await page.keyboard.down("Shift");
+                  await page.keyboard.press("Enter");
+                  await page.keyboard.up("Shift");
+                } else {
+                  await elementHandle.type(char, { delay: 50 });
+                }
+              }
               await sleep(1000);
               await elementHandle.press("Enter", {
                 delay: 100,
@@ -1232,6 +1272,7 @@ export async function onSendMessageToUser(
                 }
               }
             }
+            await sleep(2000);
             await browser.close();
           } catch (error) {
             console.log("elementHandle error", error);
@@ -1318,12 +1359,63 @@ async function checkLogin(page: Page) {
   return result;
 }
 
-export async function onOpenBrowerWithAccountFacebook(cookieString: string) {
+export async function onOpenBrowerWithAccountFacebook(
+  mainWindow: any | null,
+  cookieString: string,
+  isGetCookie: boolean
+) {
   const url = "https://facebook.com";
   try {
     let tmp = null;
     try {
       tmp = await newPageAndAddCookie(url, cookieString, false);
+
+      if (tmp) {
+        const browser = tmp.browser;
+        const page: Page = tmp.page;
+        //page.on("console", (msg) => console.log("PAGE PROFILE:", msg.text()));
+
+        //console.log("Start", url);
+
+        const check_login: boolean = await checkLogin(page);
+
+        if (!check_login) {
+          if (isGetCookie) {
+            let lastCookieString: string = "";
+            // Bắt đầu theo dõi network requests
+            await page.setRequestInterception(true);
+
+            page.on("request", async (request) => {
+              if (request.isNavigationRequest()) {
+                // Kiểm tra cookies sau mỗi navigation request
+                const cookie = await handleBrowserClosing(page);
+                if (cookie != "") {
+                  if (cookie != lastCookieString) {
+                    lastCookieString = cookie;
+                    //console.log("lastCookieString", lastCookieString);
+                    if (mainWindow) {
+                      //console.log("update-cookie-to-view", lastCookieString);
+                      mainWindow.webContents.send(
+                        "update-cookie-to-view",
+                        cookie
+                      );
+                    }
+                  }
+                }
+              }
+              request.continue();
+            });
+          }
+
+          browser.on("targetdestroyed", async (target) => {
+            const openPages = await browser.pages();
+            if (openPages.length == 0) {
+              await browser.close();
+              console.log("Browser closed");
+            }
+          });
+        }
+      }
     } catch (error) {
       console.log("onOpenBrowerWithAccountFacebook", error);
     }
@@ -1336,7 +1428,7 @@ export async function onOpenBrowerWithAccountFacebook(cookieString: string) {
 async function newPageAndAddCookie(
   url: string,
   cookieString: string,
-  headless: boolean = false
+  headless: boolean = true
 ): Promise<RESULT_PAGE> {
   const platformKey = getPlatformKey();
   const chromiumConfig = chromiumInfo[platformKey];
@@ -1402,4 +1494,110 @@ async function newPageAndAddCookie(
     await browser.close();
     throw error;
   }
+}
+
+async function smoothScroll(page: Page, distance: number, duration: number) {
+  await page.evaluate(
+    async (distance, duration) => {
+      await new Promise((resolve) => {
+        const start = performance.now();
+        const startPosition = window.pageYOffset;
+
+        function step() {
+          const elapsed = performance.now() - start;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // Hàm easing để tạo hiệu ứng mượt mà
+          const easeInOutQuad = (t: number) =>
+            t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+          window.scrollTo(
+            0,
+            startPosition + distance * easeInOutQuad(progress)
+          );
+
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            resolve(true);
+          }
+        }
+
+        requestAnimationFrame(step);
+      });
+    },
+    distance,
+    duration
+  );
+}
+
+async function pasteImage(page: Page, selector: ElementHandle<Element>) {
+  await selector.focus();
+
+  await page.keyboard.down("ControlLeft");
+  await page.keyboard.down("V");
+
+  await page.keyboard.up("V");
+  await page.keyboard.up("ControlLeft");
+  // Đợi một chút để đảm bảo hình ảnh đã được paste
+  await sleep(2000);
+}
+
+async function uploadImage(page: Page, link_file: string) {
+  try {
+    const input: any = await page.$(
+      'xpath=//input[@type="file" and @multiple=""]'
+    );
+    console.log("Input", input);
+    await input.uploadFile(link_file);
+
+    console.log("File uploaded successfully");
+  } catch (error) {
+    console.error("Error in uploadImage:", error);
+    throw error;
+  }
+}
+
+async function getCookies(page: Page, domain?: string) {
+  let cookies: Cookie[] = [];
+
+  if (domain) {
+    cookies = await page.cookies();
+    cookies = cookies.filter((cookie) => cookie.domain.includes(domain));
+
+    // Kiểm tra xem có cookie 'c_user' hay không
+    const hasUserCookie = cookies.some((cookie) => cookie.name === "c_user");
+
+    if (hasUserCookie) {
+      return cookies;
+    } else {
+      return []; // Trả về mảng rỗng nếu không tìm thấy 'c_user'
+    }
+  }
+
+  return cookies;
+}
+function cookiesToString(cookies: Cookie[]): string {
+  return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+}
+
+async function handleBrowserClosing(page: Page): Promise<string> {
+  try {
+    if (page && !page.isClosed()) {
+      const facebookCookies = await getCookies(page, "facebook.com");
+      if (facebookCookies.length > 0) {
+        const cookie = cookiesToString(facebookCookies);
+        //console.log("Facebook cookies:", cookie);
+        return cookie;
+      } else {
+        //console.log("Facebook cookies: Rỗng");
+      }
+      return "";
+    }
+  } catch (error) {
+    console.error("Lỗi khi xử lý đóng browser:", error);
+    return "";
+  }
+
+  return "";
 }
