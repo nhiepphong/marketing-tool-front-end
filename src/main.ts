@@ -227,6 +227,9 @@ ipcMain.handle(
       // }
 
       const result = await onSendMessageToUser(
+        {
+          isStopRequested: () => isScrapingStopped,
+        },
         mainWindow,
         cookies,
         dataSend,

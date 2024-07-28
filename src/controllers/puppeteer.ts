@@ -1129,6 +1129,7 @@ async function getListURLProfileFromPopupUser(
 }
 
 export async function onSendMessageToUser(
+  option: ScrapingOptions,
   mainWindow: any | null,
   cookies: string,
   dataSend: any,
@@ -1182,6 +1183,14 @@ export async function onSendMessageToUser(
             await browser.close();
             console.log("browser.close();");
             break;
+          }
+
+          result = {
+            status: false,
+            message: "Chuẩn bị gửi đến " + data.name,
+          };
+          if (mainWindow) {
+            mainWindow.webContents.send("update-chat-function-to-view", result);
           }
 
           // Đóng tất cả các popup chat
@@ -1253,6 +1262,16 @@ export async function onSendMessageToUser(
                 delay: 100,
               });
               console.log("press Enter");
+              result = {
+                status: false,
+                message: "Đã gửi đến " + data.name,
+              };
+              if (mainWindow) {
+                mainWindow.webContents.send(
+                  "update-chat-function-to-view",
+                  result
+                );
+              }
               await sleep(3000);
               while (1) {
                 try {
@@ -1290,6 +1309,9 @@ export async function onSendMessageToUser(
         mainWindow.webContents.send("update-chat-function-to-view", result);
       }
       await sleep(delay * 1000);
+      if (option.isStopRequested()) {
+        break;
+      }
     }
   } catch (error) {
     console.error("Error in scrape-facebook:", error);

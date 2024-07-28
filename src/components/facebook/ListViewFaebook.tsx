@@ -194,6 +194,9 @@ const ListViewFaebook: React.FC<ListViewProps> = ({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Phone
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Chat
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -221,6 +224,17 @@ const ListViewFaebook: React.FC<ListViewProps> = ({
                           className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs"
                         >
                           Get Phone
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.is_send ? (
+                        <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs">
+                          Đã gửi
+                        </button>
+                      ) : (
+                        <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded text-xs">
+                          Chưa gửi
                         </button>
                       )}
                     </td>

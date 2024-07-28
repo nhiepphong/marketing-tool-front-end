@@ -32,6 +32,14 @@ const FacebookChat: React.FC = () => {
       setTextReload("1|" + getTimeNowToString());
     });
     getAllGroup();
+
+    return () => {
+      // Remove listener (nếu cần)
+      if (isLoading) {
+        console.log("Stop");
+        window.electronAPI.stopRunTask();
+      }
+    };
   }, []);
 
   const getAllGroup = async () => {
@@ -76,10 +84,6 @@ const FacebookChat: React.FC = () => {
       return;
     }
 
-    console.log("message", message);
-    console.log("Delay", delay);
-    console.log("file", file);
-
     const link_file = file ? file.path : "";
     setDataSend({
       message: message,
@@ -89,20 +93,17 @@ const FacebookChat: React.FC = () => {
     });
   };
 
-  const fileToBase64 = (file: File) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
+  const onStopchat = () => {
+    window.electronAPI.stopRunTask();
+    setIsLoading(false);
+    setAlertMessage("Dừng lấy thông tin");
+  };
 
   useEffect(() => {
     onStartSend();
   }, [dataSend]);
 
   const onStartSend = async () => {
-    console.log("dataSend", dataSend);
     if (dataSend && dataSend.status == true && selectedGroup) {
       console.log("Send", dataSend);
       setIsLoading(true);
@@ -233,14 +234,33 @@ const FacebookChat: React.FC = () => {
         </button>
         {isReportExpanded && (
           <div className="mt-4 bg-gray-100 p-4 rounded">
-            <div>
+            {alertMessage !== "" ? (
+              <div className="mb-4 text-center text-[green]">
+                <p className="bg-gray-100 px-4 py-2 rounded">{alertMessage}</p>
+              </div>
+            ) : (
+              <></>
+            )}
+
+            {isLoading ? (
               <button
-                onClick={onRunChat}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                onClick={onStopchat}
+                className="px-4 py-2 w-full text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50"
+                type="submit"
               >
-                Gửi tin nhắn
+                STOP
               </button>
-            </div>
+            ) : (
+              <div>
+                <button
+                  onClick={onRunChat}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  Gửi tin nhắn
+                </button>
+              </div>
+            )}
+
             <div className="mt-4">
               <ListViewFaebookChat
                 isLoading={false}
