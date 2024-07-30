@@ -23,6 +23,7 @@ import Profile from "./pages/profile";
 import PackagesPage from "./pages/packages";
 import PurchaseHistoryPage from "./pages/billing-history";
 import FacebookTab from "./pages/facebook-tab";
+import CaptchaTab from "./pages/captcha-tab";
 
 const router = createHashRouter([
   {
@@ -70,6 +71,10 @@ const router = createHashRouter([
       {
         path: "facebook",
         element: <FacebookTab />,
+      },
+      {
+        path: "captcha",
+        element: <CaptchaTab />,
       },
       {
         path: "*",

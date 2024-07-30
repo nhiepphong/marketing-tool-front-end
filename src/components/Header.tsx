@@ -4,7 +4,6 @@ import { useContext, useEffect, useState } from "react";
 import { getUserData, updateData } from "../redux/slices/userSlices";
 import logo from "../assets/logo.png";
 import { getUserInfoByAPI } from "../api/user";
-import { showToast } from "../utils/showToast";
 import DataContext from "../context/DataContext";
 
 export default function Header() {
@@ -22,6 +21,7 @@ export default function Header() {
     if (path === "/") setActiveMenu("main");
     else if (path.startsWith("/zalo")) setActiveMenu("zalo");
     else if (path.startsWith("/facebook")) setActiveMenu("facebook");
+    else if (path.startsWith("/captcha")) setActiveMenu("captcha");
   }, [location]);
 
   const MenuLink: React.FC<{
@@ -91,6 +91,9 @@ export default function Header() {
             </MenuLink>
             <MenuLink to="/app/facebook" menu="facebook">
               Facebook
+            </MenuLink>
+            <MenuLink to="/app/captcha" menu="captcha">
+              Captcha
             </MenuLink>
           </div>
 

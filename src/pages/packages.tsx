@@ -12,6 +12,15 @@ import DataContext from "../context/DataContext";
 import PaymentPopup from "../components/package/payment-popup";
 import qrcode_thanh_toan from "../assets/qrcode-thanh-toan.png";
 
+interface PackageGroupProps {
+  type: {
+    id: number;
+    name: string;
+    image: string;
+  };
+  packages: PackageProps[];
+}
+
 interface PackageProps {
   id: number;
   name: string;
@@ -118,7 +127,7 @@ const PackagesPage: React.FC = () => {
   const dispatch = useDispatch();
   const dataUser = useSelector(getUserData);
   const { isNeedGetNewToken, setIsNeedGetNewToken } = useContext(DataContext)!;
-  const [packages, setPackages] = useState<PackageProps[]>([]);
+  const [packages, setPackages] = useState<PackageGroupProps[]>([]);
   const [link, setLink] = useState("");
 
   useEffect(() => {
@@ -146,17 +155,30 @@ const PackagesPage: React.FC = () => {
   return (
     <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold text-center mb-4">Gói Sử Dụng</h1>
-      <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
+      <p className="text-center text-gray-600 max-w-2xl mx-auto">
         Chọn gói phù hợp với nhu cầu của bạn. Chúng tôi cung cấp nhiều lựa chọn
         để đáp ứng mọi quy mô từ cá nhân đến doanh nghiệp lớn. Nâng cấp hoặc hạ
         cấp bất cứ lúc nào để tối ưu hóa chi phí và hiệu suất.
       </p>
-      <div className="flex flex-nowrap overflow-x-auto space-x-4 pb-4">
-        {packages.map((pkg, index) => (
-          <div key={index} className="flex-none w-64">
-            <Package {...pkg} link={link} />
-          </div>
-        ))}
+      <div className="max-w-full mx-auto">
+        {packages.length > 0 ? (
+          packages.map((item: PackageGroupProps, index: number) => (
+            <div className="max-w-full mx-auto pt-6">
+              <h1 className="text-2xl font-bold text-center mb-4">
+                {item.type.name}
+              </h1>
+              <div className="flex flex-nowrap overflow-x-auto space-x-4 pb-4">
+                {item.packages.map((pkg: PackageProps, index1: number) => (
+                  <div key={index + "-" + index1} className="flex-none w-64">
+                    <Package {...pkg} link={link} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <></>
+        )}
       </div>
     </div>
   );

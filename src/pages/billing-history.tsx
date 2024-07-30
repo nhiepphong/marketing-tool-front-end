@@ -131,8 +131,10 @@ const PurchaseHistoryPage: React.FC = () => {
           <tbody className="divide-y divide-gray-200">
             {purchaseHistory.map((item: any) => (
               <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap text-center">
                   {item.package.name}
+                  <br />
+                  {item.package.function.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {item.price.toLocaleString()} VND

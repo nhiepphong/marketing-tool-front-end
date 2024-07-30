@@ -72,3 +72,18 @@ export const getNewTokenByAPI = async (params: any, jwt: string) => {
     return null;
   }
 };
+
+export const requestGenerateNewTokenAPIForCaptcha = async (
+  params: any,
+  jwt: string
+) => {
+  try {
+    const reqUrl = URL_API.REFRESH_TOKEN_API_CAPTCHA;
+    const res = await Api.post(reqUrl, params, jwt);
+    //console.log("getUserInfoByAPI", res);
+    return res;
+  } catch (error) {
+    //console.log("getUserInfoByAPI error", error);
+    return null;
+  }
+};
