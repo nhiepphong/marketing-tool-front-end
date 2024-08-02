@@ -94,6 +94,7 @@ Headers:
 
 Body:
   image: File (Captcha image file)
+  type: vietcombank, mbbank, acbbank
 
 Response:
   {

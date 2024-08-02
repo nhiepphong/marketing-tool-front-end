@@ -34,4 +34,5 @@ export enum URL_API {
   FB_GET_PHONE_FROM_UID = "https://api.martool.online/facebook/get-phone-from-uid",
 
   CAPTCHA_API_FOR_USER = "https://api.martool.online/captcha/recognition-captcha",
+  CAPTCHA_GET_HISTORY = "https://api.martool.online/captcha/get-history",
 }

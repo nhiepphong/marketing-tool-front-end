@@ -111,3 +111,16 @@ export function replaceKeywords(
   }, message);
   return msg;
 }
+
+export const calculateRemainingDays = (expireDateStr: string): number => {
+  const expireDate = new Date(expireDateStr);
+  const today = new Date();
+
+  // Chuyển đổi Date thành timestamp (số)
+  const diffTime = expireDate.getTime() - today.getTime();
+
+  // Chuyển đổi milliseconds thành số ngày và làm tròn
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays;
+};
